@@ -1,0 +1,35 @@
+dataset_path: ViLP/ViLP
+task: "vilp"
+task_class: lmms_eval.tasks.vilp.ViLPTask
+test_split: train
+output_type: generate_until
+
+doc_to_text: !function utils.vilp_doc_to_text
+
+process_results: !function utils.vilp_process_results
+
+generation_kwargs:
+  max_new_tokens: 16
+  temperature: 0
+  top_p: 1.0
+  num_beams: 1
+  do_sample: false
+
+metric_list:
+  - metric: vilp_score
+    aggregation: !function utils.vilp_aggregate_score
+    higher_is_better: true
+  - metric: vilp_prior
+    aggregation: !function utils.vilp_aggregate_prior
+    higher_is_better: true
+
+lmms_eval_specific_kwargs:
+  default:
+    mode: "with_fact"  # "with_fact" or "without_fact"
+    prompt_template: "Please answer with one word: {question}"
+
+metadata:
+  version: 1.0
+  description: "ViLP: Probing Visual Language Priors in VLMs benchmark"
+  paper_url: "https://arxiv.org/abs/2501.00569"
+  project_page: "https://vilp-team.github.io"
