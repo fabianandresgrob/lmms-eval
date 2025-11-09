@@ -1,0 +1,36 @@
+dataset_path: anvo25/vlms-are-biased
+task: "vlms_are_biased"
+test_split: train
+output_type: generate_until
+
+doc_to_visual: !function utils.vlms_are_biased_doc_to_visual
+doc_to_text: !function utils.vlms_are_biased_doc_to_text
+doc_to_target: "answer"
+
+process_results: !function utils.vlms_are_biased_process_results
+
+generation_kwargs:
+  max_new_tokens: 32
+  temperature: 0
+  top_p: 1.0
+  num_beams: 1
+  do_sample: false
+
+metric_list:
+  - metric: accuracy
+    aggregation: mean
+    higher_is_better: true
+  - metric: accuracy_by_domain
+    aggregation: !function utils.vlms_are_biased_aggregate_by_domain
+    higher_is_better: true
+
+lmms_eval_specific_kwargs:
+  default:
+    pre_prompt: ""
+    post_prompt: "\nProvide your answer as a number or brief text."
+
+metadata:
+  version: 1.0
+  description: "Vision Language Models are Biased benchmark - Tests counting accuracy on counterfactual images across multiple domains"
+  paper_url: "https://arxiv.org/abs/2505.23941"
+  project_page: "https://vlmsarebiased.github.io"
