@@ -1,6 +1,6 @@
 dataset_path: anvo25/vlms-are-biased
 task: "vlms_are_biased"
-test_split: train
+test_split: main
 output_type: generate_until
 
 doc_to_visual: !function utils.vlms_are_biased_doc_to_visual
