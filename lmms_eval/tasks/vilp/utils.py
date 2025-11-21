@@ -5,6 +5,37 @@ from typing import Any
 import numpy as np
 
 
+def vilp_doc_to_visual(doc: dict[str, Any]) -> list:
+    """Extract the appropriate image based on _image_idx.
+
+    Args:
+        doc: Document with _image_idx set by ViLPTask expansion
+
+    Returns:
+        List containing the appropriate RGB image
+    """
+    image_idx = doc.get("_image_idx", 1)
+    image_key = f"image{image_idx}"
+
+    if image_key in doc and doc[image_key] is not None:
+        return [doc[image_key].convert("RGB")]
+    return []
+
+
+def vilp_doc_to_target(doc: dict[str, Any]) -> str:
+    """Extract the appropriate answer based on _image_idx.
+
+    Args:
+        doc: Document with _image_idx set by ViLPTask expansion
+
+    Returns:
+        Target answer string
+    """
+    image_idx = doc.get("_image_idx", 1)
+    answer_key = f"answer{image_idx}"
+    return str(doc.get(answer_key, ""))
+
+
 def normalize_output(output: str) -> str:
     """Normalize output for comparison.
 

@@ -51,35 +51,6 @@ class ViLPTask(ConfigurableTask):
 
         return expanded_docs
 
-    def doc_to_visual(self, doc: dict) -> list:
-        """Extract the appropriate image based on _image_idx.
-
-        Args:
-            doc: Document with _image_idx set
-
-        Returns:
-            List containing the appropriate image
-        """
-        image_idx = doc.get("_image_idx", 1)
-        image_key = f"image{image_idx}"
-
-        if image_key in doc and doc[image_key] is not None:
-            return [doc[image_key].convert("RGB")]
-        return []
-
-    def doc_to_target(self, doc: dict) -> str:
-        """Extract the appropriate answer based on _image_idx.
-
-        Args:
-            doc: Document with _image_idx set
-
-        Returns:
-            Target answer string
-        """
-        image_idx = doc.get("_image_idx", 1)
-        answer_key = f"answer{image_idx}"
-        return str(doc.get(answer_key, ""))
-
     def _process_docs(self, docs: list[dict]) -> list[dict]:
         """Process and expand documents.
 
