@@ -291,9 +291,7 @@ def normalize_output(output: str) -> str:
     return output
 
 
-def vilp_doc_to_text(
-    doc: dict[str, Any], lmms_eval_specific_kwargs: Optional[dict[str, str]] = None
-) -> str:
+def vilp_doc_to_text(doc: dict[str, Any], lmms_eval_specific_kwargs: Optional[dict[str, str]] = None) -> str:
     """Format question text.
 
     Args:
@@ -313,16 +311,12 @@ def vilp_doc_to_text(
     if mode == "without_fact" and "." in question:
         question = ".".join(question.split(".")[1:]).strip()
 
-    prompt_template = lmms_eval_specific_kwargs.get(
-        "prompt_template", "Please answer with one word: {question}"
-    )
+    prompt_template = lmms_eval_specific_kwargs.get("prompt_template", "Please answer with one word: {question}")
 
     return prompt_template.format(question=question)
 
 
-def vilp_process_results(
-    doc: dict[str, Any], results: list[str]
-) -> dict[str, dict[str, Any]]:
+def vilp_process_results(doc: dict[str, Any], results: list[str]) -> dict[str, dict[str, Any]]:
     """Process model results and compute accuracy.
 
     Args:
@@ -345,9 +339,7 @@ def vilp_process_results(
     answer_normalized = normalize_output(answer)
 
     # Check for match (excluding 'none')
-    is_correct = (
-        pred_normalized == answer_normalized and pred_normalized != "none"
-    )
+    is_correct = pred_normalized == answer_normalized and pred_normalized != "none"
 
     # Return metrics for aggregation
     return {

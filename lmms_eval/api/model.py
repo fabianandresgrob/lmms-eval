@@ -302,13 +302,13 @@ class lmms(abc.ABC):
         - Instance of the LMM class.
         """
         additional_config = {} if additional_config is None else additional_config
-        
+
         # Handle both string and dict arg_string for backwards compatibility
         if isinstance(arg_string, dict):
             args = arg_string
         else:
             args = utils.simple_parse_args_string(arg_string)
-        
+
         args2 = {k: v for k, v in additional_config.items() if v is not None}
         return cls(**args, **args2)
 

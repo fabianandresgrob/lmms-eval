@@ -59,6 +59,7 @@ class Huggingface(lmms):
         system_prompt: Optional[str] = "You are a helpful assistant.",
         interleave_visuals: Optional[bool] = False,
         reasoning_prompt: Optional[str] = None,
+        cache_dir: Optional[str] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -97,7 +98,14 @@ class Huggingface(lmms):
         if attn_implementation is not None:
             model_kwargs["attn_implementation"] = attn_implementation
 
-        config = AutoConfig.from_pretrained(pretrained)
+        if cache_dir is not None:
+            model_kwargs["cache_dir"] = cache_dir
+
+        config_kwargs = {}
+        if cache_dir is not None:
+            config_kwargs["cache_dir"] = cache_dir
+
+        config = AutoConfig.from_pretrained(pretrained, **config_kwargs)
         if config.model_type in AutoModelForCausalLM._model_mapping.keys():
             model_cls = AutoModelForCausalLM
         elif config.model_type in AutoModelForImageTextToText._model_mapping.keys():
@@ -112,8 +120,9 @@ class Huggingface(lmms):
             self.reasoning_prompt = reasoning_prompt.replace("\\n", "\n")
         else:
             self.reasoning_prompt = None
-        self.processor = AutoProcessor.from_pretrained(pretrained)
-        self._tokenizer = AutoTokenizer.from_pretrained(pretrained)
+
+        self.processor = AutoProcessor.from_pretrained(pretrained, **config_kwargs)
+        self._tokenizer = AutoTokenizer.from_pretrained(pretrained, **config_kwargs)
         self.system_prompt = system_prompt
         self.interleave_visuals = interleave_visuals
 

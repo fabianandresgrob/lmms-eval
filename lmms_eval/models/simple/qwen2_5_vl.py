@@ -54,6 +54,7 @@ class Qwen2_5_VL(lmms):
         system_prompt: Optional[str] = "You are a helpful assistant.",
         interleave_visuals: Optional[bool] = False,
         reasoning_prompt: Optional[str] = None,
+        cache_dir: Optional[str] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -92,6 +93,9 @@ class Qwen2_5_VL(lmms):
         if attn_implementation is not None:
             model_kwargs["attn_implementation"] = attn_implementation
 
+        if cache_dir is not None:
+            model_kwargs["cache_dir"] = cache_dir
+
         self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(pretrained, **model_kwargs).eval()
         self.max_pixels = max_pixels
         self.min_pixels = min_pixels
@@ -101,8 +105,18 @@ class Qwen2_5_VL(lmms):
             self.reasoning_prompt = reasoning_prompt.replace("\\n", "\n")
         else:
             self.reasoning_prompt = None
-        self.processor = AutoProcessor.from_pretrained(pretrained, max_pixels=max_pixels, min_pixels=min_pixels)
-        self._tokenizer = AutoTokenizer.from_pretrained(pretrained)
+
+        processor_kwargs = {"max_pixels": max_pixels, "min_pixels": min_pixels}
+        if cache_dir is not None:
+            processor_kwargs["cache_dir"] = cache_dir
+
+        self.processor = AutoProcessor.from_pretrained(pretrained, **processor_kwargs)
+
+        tokenizer_kwargs = {}
+        if cache_dir is not None:
+            tokenizer_kwargs["cache_dir"] = cache_dir
+
+        self._tokenizer = AutoTokenizer.from_pretrained(pretrained, **tokenizer_kwargs)
         self.system_prompt = system_prompt
         self.interleave_visuals = interleave_visuals
 

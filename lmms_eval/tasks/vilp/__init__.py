@@ -31,12 +31,7 @@ class ViLPTask(ConfigurableTask):
             answer_key = f"answer{i}"
 
             # Skip if image or answer is missing
-            if (
-                image_key not in doc
-                or answer_key not in doc
-                or doc[image_key] is None
-                or doc[answer_key] is None
-            ):
+            if image_key not in doc or answer_key not in doc or doc[image_key] is None or doc[answer_key] is None:
                 continue
 
             # Create a new doc for this image

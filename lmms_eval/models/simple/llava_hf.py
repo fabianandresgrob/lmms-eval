@@ -74,6 +74,7 @@ class LlavaHf(lmms):
         chat_template: Optional[str] = None,
         use_cache: bool = True,
         max_frames_num: Optional[int] = 32,
+        cache_dir: Optional[str] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -90,14 +91,28 @@ class LlavaHf(lmms):
         if isinstance(dtype, str) and dtype != "auto":
             dtype = getattr(torch, dtype)
 
-        config = AutoConfig.from_pretrained(pretrained)
+        config_kwargs = {}
+        if cache_dir is not None:
+            config_kwargs["cache_dir"] = cache_dir
+
+        config = AutoConfig.from_pretrained(pretrained, **config_kwargs)
         self.max_frames_num = max_frames_num
         model_type = getattr(config, "model_type", "llava")
         model_type = model_map[model_type]
-        self._model = model_type.from_pretrained(pretrained, revision=revision, torch_dtype=dtype, device_map=self.device_map, trust_remote_code=trust_remote_code, attn_implementation=attn_implementation)
+
+        model_kwargs = {"revision": revision, "torch_dtype": dtype, "device_map": self.device_map, "trust_remote_code": trust_remote_code, "attn_implementation": attn_implementation}
+        if cache_dir is not None:
+            model_kwargs["cache_dir"] = cache_dir
+
+        self._model = model_type.from_pretrained(pretrained, **model_kwargs)
 
         self.pretrained = pretrained
-        self._image_processor = AutoProcessor.from_pretrained(pretrained, revision=revision, trust_remote_code=trust_remote_code)
+
+        processor_kwargs = {"revision": revision, "trust_remote_code": trust_remote_code}
+        if cache_dir is not None:
+            processor_kwargs["cache_dir"] = cache_dir
+
+        self._image_processor = AutoProcessor.from_pretrained(pretrained, **processor_kwargs)
         # Pad from left for batched generation: https://huggingface.co/docs/transformers/v4.39.3/en/model_doc/llava#usage-tips
         self._image_processor.tokenizer.padding_side = "left"
         self._tokenizer = self._image_processor.tokenizer

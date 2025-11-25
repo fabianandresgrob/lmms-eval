@@ -186,7 +186,7 @@ def simple_evaluate(
     if isinstance(model, str):
         if model_args is None:
             model_args = ""
-        
+
         # Handle both string and dict model_args
         if isinstance(model_args, dict):
             # Merge model_args dict with additional config

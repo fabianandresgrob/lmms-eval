@@ -1,7 +1,7 @@
 """Utility functions for VLMs Are Biased benchmark."""
 
 from collections import defaultdict
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
 
 
 def vlms_are_biased_doc_to_visual(doc: dict[str, Any]) -> list:
@@ -16,9 +16,7 @@ def vlms_are_biased_doc_to_visual(doc: dict[str, Any]) -> list:
     return [doc["image"].convert("RGB")]
 
 
-def vlms_are_biased_doc_to_text(
-    doc: dict[str, Any], lmms_eval_specific_kwargs: Optional[Dict[str, str]] = None
-) -> str:
+def vlms_are_biased_doc_to_text(doc: dict[str, Any], lmms_eval_specific_kwargs: Optional[Dict[str, str]] = None) -> str:
     """Format question text with optional prompt additions.
 
     Args:
@@ -41,9 +39,7 @@ def vlms_are_biased_doc_to_text(
     return f"{pre_prompt}{prompt}{post_prompt}"
 
 
-def vlms_are_biased_process_results(
-    doc: dict[str, Any], results: list[str]
-) -> dict[str, Any]:
+def vlms_are_biased_process_results(doc: dict[str, Any], results: list[str]) -> dict[str, Any]:
     """Process model results and compute accuracy and bias ratio.
 
     Args:
