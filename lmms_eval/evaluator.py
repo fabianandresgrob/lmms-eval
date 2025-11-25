@@ -186,14 +186,28 @@ def simple_evaluate(
     if isinstance(model, str):
         if model_args is None:
             model_args = ""
-        lm = lmms_eval.models.get_model(model, force_simple).create_from_arg_string(
-            model_args,
-            {
-                "batch_size": batch_size,
-                "max_batch_size": max_batch_size,
-                "device": device,
-            },
-        )
+        
+        # Handle both string and dict model_args
+        if isinstance(model_args, dict):
+            # Merge model_args dict with additional config
+            merged_args = {**model_args}
+            if batch_size is not None:
+                merged_args["batch_size"] = batch_size
+            if max_batch_size is not None:
+                merged_args["max_batch_size"] = max_batch_size
+            if device is not None:
+                merged_args["device"] = device
+            lm = lmms_eval.models.get_model(model, force_simple)(**merged_args)
+        else:
+            # Original string-based approach
+            lm = lmms_eval.models.get_model(model, force_simple).create_from_arg_string(
+                model_args,
+                {
+                    "batch_size": batch_size,
+                    "max_batch_size": max_batch_size,
+                    "device": device,
+                },
+            )
     elif isinstance(model, lmms_eval.api.model.lmms):
         lm = model
     task_type = "simple" if lm.is_simple else "chat"

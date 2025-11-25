@@ -5,7 +5,7 @@ import hashlib
 import json
 import os
 import unicodedata
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import torch
 import torch.distributed as dist
@@ -289,19 +289,26 @@ class lmms(abc.ABC):
         pass
 
     @classmethod
-    def create_from_arg_string(cls: Type[T], arg_string: str, additional_config: Optional[dict] = None) -> T:
+    def create_from_arg_string(cls: Type[T], arg_string: Union[str, dict], additional_config: Optional[dict] = None) -> T:
         """
         Creates an instance of the LMM class using the given argument string and additional config.
 
         Parameters:
         - arg_string: A string containing arguments in the format key1=value1,key2=value2.
+                     Can also be a dict for backwards compatibility.
         - additional_config: Optional dictionary containing additional configuration parameters.
 
         Returns:
         - Instance of the LMM class.
         """
         additional_config = {} if additional_config is None else additional_config
-        args = utils.simple_parse_args_string(arg_string)
+        
+        # Handle both string and dict arg_string for backwards compatibility
+        if isinstance(arg_string, dict):
+            args = arg_string
+        else:
+            args = utils.simple_parse_args_string(arg_string)
+        
         args2 = {k: v for k, v in additional_config.items() if v is not None}
         return cls(**args, **args2)
 

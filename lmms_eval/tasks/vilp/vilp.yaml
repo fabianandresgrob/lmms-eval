@@ -1,6 +1,5 @@
 dataset_path: ViLP/ViLP
 task: "vilp"
-task_class: lmms_eval.tasks.vilp.ViLPTask
 test_split: train
 output_type: generate_until
 
