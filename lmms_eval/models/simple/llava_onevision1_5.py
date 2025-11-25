@@ -48,6 +48,7 @@ class Llava_OneVision1_5(lmms):
         interleave_visuals: Optional[bool] = False,
         reasoning_prompt: Optional[str] = None,
         max_length: int = 2048,
+        cache_dir: Optional[str] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -82,6 +83,9 @@ class Llava_OneVision1_5(lmms):
         if attn_implementation is not None:
             model_kwargs["attn_implementation"] = attn_implementation
 
+        if cache_dir is not None:
+            model_kwargs["cache_dir"] = cache_dir
+
         self._model = AutoModelForCausalLM.from_pretrained(pretrained, **model_kwargs).eval()
         self.max_pixels = max_pixels
         self.min_pixels = min_pixels
@@ -91,8 +95,18 @@ class Llava_OneVision1_5(lmms):
             self.reasoning_prompt = reasoning_prompt.replace("\\n", "\n")
         else:
             self.reasoning_prompt = None
-        self.processor = AutoProcessor.from_pretrained(pretrained, max_pixels=max_pixels, min_pixels=min_pixels, trust_remote_code=True)
-        self._tokenizer = AutoTokenizer.from_pretrained(pretrained, trust_remote_code=True)
+
+        processor_kwargs = {"max_pixels": max_pixels, "min_pixels": min_pixels, "trust_remote_code": True}
+        if cache_dir is not None:
+            processor_kwargs["cache_dir"] = cache_dir
+
+        self.processor = AutoProcessor.from_pretrained(pretrained, **processor_kwargs)
+
+        tokenizer_kwargs = {"trust_remote_code": True}
+        if cache_dir is not None:
+            tokenizer_kwargs["cache_dir"] = cache_dir
+
+        self._tokenizer = AutoTokenizer.from_pretrained(pretrained, **tokenizer_kwargs)
         self.system_prompt = system_prompt
         self.interleave_visuals = interleave_visuals
 

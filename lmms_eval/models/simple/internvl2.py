@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -179,6 +179,7 @@ class InternVL2(lmms):
         batch_size: str = "1",
         num_frame: int = 32,
         num_layers=None,
+        cache_dir: Optional[str] = None,
         **kwargs,
     ):
         super().__init__()
@@ -204,8 +205,25 @@ class InternVL2(lmms):
             self._device = torch.device(f"cuda:{accelerator.local_process_index}")
             self.device_map = f"cuda:{accelerator.local_process_index}"
 
-        self._model = AutoModel.from_pretrained(self.path, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True, device_map=self.device_map).eval()
-        self._tokenizer = AutoTokenizer.from_pretrained(self.path, trust_remote_code=True, device_map=self.device_map)
+        model_kwargs = {
+            "torch_dtype": torch.bfloat16,
+            "low_cpu_mem_usage": True,
+            "trust_remote_code": True,
+            "device_map": self.device_map,
+        }
+        if cache_dir is not None:
+            model_kwargs["cache_dir"] = cache_dir
+
+        self._model = AutoModel.from_pretrained(self.path, **model_kwargs).eval()
+
+        tokenizer_kwargs = {
+            "trust_remote_code": True,
+            "device_map": self.device_map,
+        }
+        if cache_dir is not None:
+            tokenizer_kwargs["cache_dir"] = cache_dir
+
+        self._tokenizer = AutoTokenizer.from_pretrained(self.path, **tokenizer_kwargs)
 
         if accelerator.num_processes > 1:
             assert accelerator.distributed_type in [DistributedType.FSDP, DistributedType.MULTI_GPU, DistributedType.DEEPSPEED], "Unsupported distributed type provided. Only DDP and FSDP are supported."
