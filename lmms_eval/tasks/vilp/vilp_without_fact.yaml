@@ -3,6 +3,8 @@ task: "vilp_without_fact"
 test_split: train
 output_type: generate_until
 
+process_docs: !function utils.vilp_expand_docs
+
 doc_to_visual: !function utils.vilp_doc_to_visual
 doc_to_text: !function utils.vilp_doc_to_text
 doc_to_target: !function utils.vilp_doc_to_target
@@ -26,7 +28,7 @@ metric_list:
 
 lmms_eval_specific_kwargs:
   default:
-    mode: "without_fact"  # ViLP-P mode: without fact in question
+    mode: "without_fact"
     prompt_template: "Please answer with one word: {question}"
 
 metadata:

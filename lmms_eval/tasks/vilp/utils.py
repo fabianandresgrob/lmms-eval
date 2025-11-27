@@ -3,6 +3,7 @@
 from typing import Any, Optional
 
 import numpy as np
+from datasets import Dataset
 
 
 def vilp_doc_to_visual(doc: dict[str, Any]) -> list:
@@ -314,6 +315,28 @@ def vilp_doc_to_text(doc: dict[str, Any], lmms_eval_specific_kwargs: Optional[di
     prompt_template = lmms_eval_specific_kwargs.get("prompt_template", "Please answer with one word: {question}")
 
     return prompt_template.format(question=question)
+
+
+def vilp_expand_docs(dataset: Dataset) -> Dataset:
+    """Expand each document into 3 documents, one per image.
+    
+    This function takes the original dataset and creates 3 copies of each
+    document with _image_idx set to 1, 2, and 3 respectively.
+    
+    Args:
+        dataset: The original HuggingFace Dataset
+        
+    Returns:
+        A new Dataset with 3x the original documents, each with _image_idx field
+    """
+    expanded_rows = []
+    for doc in dataset:
+        for image_idx in [1, 2, 3]:
+            expanded_doc = dict(doc)  # shallow copy
+            expanded_doc["_image_idx"] = image_idx
+            expanded_rows.append(expanded_doc)
+    
+    return Dataset.from_list(expanded_rows)
 
 
 def vilp_process_results(doc: dict[str, Any], results: list[str]) -> dict[str, dict[str, Any]]:
