@@ -4,9 +4,14 @@ from typing import Any, Dict, List, Literal, Union
 
 import numpy as np
 import torch
-from decord import VideoReader, cpu
 from PIL import Image
 from pydantic import BaseModel
+
+try:
+    from decord import VideoReader, cpu
+except ImportError:
+    VideoReader = None
+    cpu = None
 
 try:
     from qwen_vl_utils import fetch_video

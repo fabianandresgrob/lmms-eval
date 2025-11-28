@@ -68,7 +68,6 @@ dependencies = [
     "pre-commit",
     "pydantic",
     "packaging",
-    "decord; platform_system != 'Darwin'",
     "eva-decord; platform_system == 'Darwin'",
     "zss",
     "protobuf",
@@ -78,6 +77,7 @@ dependencies = [
     "ipykernel>=6.31.0",
     "matplotlib>=3.9.4",
     "seaborn>=0.13.2",
+    "decord>=0.6.0",
 ]
 
 [project.optional-dependencies]
