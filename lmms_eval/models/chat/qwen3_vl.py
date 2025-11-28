@@ -16,11 +16,6 @@ from lmms_eval.models.model_utils.reasoning_model_utils import (
 from lmms_eval.models.simple.qwen3_vl import Qwen3_VL as Qwen3_VLSimple
 from lmms_eval.protocol import ChatMessages
 
-try:
-    from qwen_vl_utils import process_vision_info
-except ImportError:
-    eval_logger.warning("Failed to import qwen_vl_utils; Please install it via `pip install qwen-vl-utils`")
-
 
 @register_model("qwen3_vl_chat")
 class Qwen3_VL(Qwen3_VLSimple):
@@ -66,17 +61,19 @@ class Qwen3_VL(Qwen3_VLSimple):
             else:
                 video_kwargs["nframes"] = self.max_num_frames
             batched_messages = [chat_message.to_hf_messages(video_kwargs=video_kwargs) for chat_message in chat_messages]
-            texts = self.processor.apply_chat_template(batched_messages, tokenize=False, add_generation_prompt=True)
-            image_inputs, video_inputs = process_vision_info(batched_messages)
-            if video_inputs is not None:
-                total_frames = video_inputs[0].shape[0]
-                indices = np.linspace(0, total_frames - 1, self.max_num_frames, dtype=int)
-                # Append the last frame index if not already included
-                if total_frames - 1 not in indices:
-                    indices = np.append(indices, total_frames - 1)
-                video_inputs[0] = video_inputs[0][indices]
+            
+            # Use the new Qwen3-VL approach: apply_chat_template handles everything
+            # including tokenization and image processing in one call
             padding_side = "left" if self.batch_size > 1 else "right"
-            inputs = self.processor(text=texts, images=image_inputs, videos=video_inputs, padding=True, padding_side=padding_side, return_tensors="pt")
+            inputs = self.processor.apply_chat_template(
+                batched_messages,
+                tokenize=True,
+                add_generation_prompt=True,
+                padding=True,
+                padding_side=padding_side,
+                return_dict=True,
+                return_tensors="pt",
+            )
 
             if self.device_map == "auto":
                 inputs = inputs.to("cuda")
@@ -124,7 +121,7 @@ class Qwen3_VL(Qwen3_VLSimple):
             e2e_latency += end_time - start_time
             total_tokens += sum(len(ids) for ids in generated_ids_trimmed)
 
-            for ans, context in zip(answers, texts):
+            for ans, context in zip(answers, ctx):
                 clean_ans = parse_reasoning_model_answer(ans)
                 res.append(clean_ans)
                 self.cache_hook.add_partial("generate_until", (context, gen_kwargs), clean_ans)

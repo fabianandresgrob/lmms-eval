@@ -14,8 +14,62 @@ from transformers import AutoModel, AutoTokenizer
 from lmms_eval.api.instance import Instance
 from lmms_eval.api.model import lmms
 from lmms_eval.api.registry import register_model
+from transformers import GenerationConfig, GenerationMixin
 
 eval_logger = logging.getLogger("eval_logger")
+
+
+def _patch_language_model_generate(model):
+    """
+    Patch the language_model's class to inherit from GenerationMixin if it doesn't have a generate method.
+    
+    Some InternVL models (like InternVL3-9B/14B/38B) use InternLM2ForCausalLM which is a custom class 
+    from the model's remote code that doesn't inherit from GenerationMixin. This causes an AttributeError
+    when calling model.generate() since the generate method comes from GenerationMixin.
+    
+    This function dynamically patches the language_model's class to include GenerationMixin in its
+    inheritance hierarchy, enabling generation capabilities.
+    """
+    if not hasattr(model, 'language_model'):
+        return
+    
+    language_model = model.language_model
+    lm_class = type(language_model)
+    
+    # Check if the language_model already has generate method
+    if hasattr(lm_class, 'generate'):
+        return
+    
+    # Dynamically create a new class that includes GenerationMixin
+    eval_logger.info(f"Patching {lm_class.__name__} to include GenerationMixin for generation support")
+    new_class = type(
+        lm_class.__name__,
+        (GenerationMixin,) + lm_class.__bases__,
+        dict(lm_class.__dict__)
+    )
+    
+    # Change the language_model's class to the new patched class
+    language_model.__class__ = new_class
+    
+    # Ensure generation_config exists (required by GenerationMixin.generate)
+    if language_model.generation_config is None:
+        language_model.generation_config = GenerationConfig()
+    
+    # Patch prepare_inputs_for_generation to handle None/empty past_key_values
+    # The original InternLM2 code has a bug where it accesses past_key_values[0][0] 
+    # without checking if the list contains valid tensors
+    original_prepare = language_model.prepare_inputs_for_generation
+    
+    def patched_prepare_inputs_for_generation(
+        input_ids, past_key_values=None, attention_mask=None, inputs_embeds=None, **kwargs
+    ):
+        # Fix: Check if past_key_values actually contains tensors
+        if past_key_values is not None:
+            if len(past_key_values) == 0 or past_key_values[0] is None or past_key_values[0][0] is None:
+                past_key_values = None
+        return original_prepare(input_ids, past_key_values, attention_mask, inputs_embeds, **kwargs)
+    
+    language_model.prepare_inputs_for_generation = patched_prepare_inputs_for_generation
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
@@ -180,6 +234,8 @@ class InternVL2(lmms):
         num_frame: int = 32,
         num_layers=None,
         cache_dir: Optional[str] = None,
+        revision: Optional[str] = None,
+        local_files_only: bool = False,
         **kwargs,
     ):
         super().__init__()
@@ -213,8 +269,15 @@ class InternVL2(lmms):
         }
         if cache_dir is not None:
             model_kwargs["cache_dir"] = cache_dir
+        if revision is not None:
+            model_kwargs["revision"] = revision
+        if local_files_only:
+            model_kwargs["local_files_only"] = True
 
         self._model = AutoModel.from_pretrained(self.path, **model_kwargs).eval()
+
+        # Patch language_model to include GenerationMixin if needed (for InternLM2-based models)
+        _patch_language_model_generate(self._model)
 
         tokenizer_kwargs = {
             "trust_remote_code": True,
@@ -222,6 +285,10 @@ class InternVL2(lmms):
         }
         if cache_dir is not None:
             tokenizer_kwargs["cache_dir"] = cache_dir
+        if revision is not None:
+            tokenizer_kwargs["revision"] = revision
+        if local_files_only:
+            tokenizer_kwargs["local_files_only"] = True
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.path, **tokenizer_kwargs)
 

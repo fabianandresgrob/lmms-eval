@@ -55,6 +55,8 @@ class Qwen2_5_VL(lmms):
         interleave_visuals: Optional[bool] = False,
         reasoning_prompt: Optional[str] = None,
         cache_dir: Optional[str] = None,
+        revision: Optional[str] = None,
+        local_files_only: bool = False,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -95,6 +97,10 @@ class Qwen2_5_VL(lmms):
 
         if cache_dir is not None:
             model_kwargs["cache_dir"] = cache_dir
+        if revision is not None:
+            model_kwargs["revision"] = revision
+        if local_files_only:
+            model_kwargs["local_files_only"] = True
 
         self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(pretrained, **model_kwargs).eval()
         self.max_pixels = max_pixels
@@ -109,12 +115,20 @@ class Qwen2_5_VL(lmms):
         processor_kwargs = {"max_pixels": max_pixels, "min_pixels": min_pixels}
         if cache_dir is not None:
             processor_kwargs["cache_dir"] = cache_dir
+        if revision is not None:
+            processor_kwargs["revision"] = revision
+        if local_files_only:
+            processor_kwargs["local_files_only"] = True
 
         self.processor = AutoProcessor.from_pretrained(pretrained, **processor_kwargs)
 
         tokenizer_kwargs = {}
         if cache_dir is not None:
             tokenizer_kwargs["cache_dir"] = cache_dir
+        if revision is not None:
+            tokenizer_kwargs["revision"] = revision
+        if local_files_only:
+            tokenizer_kwargs["local_files_only"] = True
 
         self._tokenizer = AutoTokenizer.from_pretrained(pretrained, **tokenizer_kwargs)
         self.system_prompt = system_prompt

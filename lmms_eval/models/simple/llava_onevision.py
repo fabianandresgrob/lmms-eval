@@ -86,6 +86,8 @@ class Llava_OneVision(lmms):
         token_strategy: Optional[str] = "single",  # could be "single" or "multiple", "multiple" denotes adding multiple <image> tokens for each frame
         video_decode_backend: str = "decord",
         cache_dir: Optional[str] = None,
+        revision: Optional[str] = None,
+        local_files_only: bool = False,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -115,6 +117,10 @@ class Llava_OneVision(lmms):
             llava_model_args["use_flash_attention_2"] = kwargs["use_flash_attention_2"]
         if cache_dir is not None:
             llava_model_args["cache_dir"] = cache_dir
+        if revision is not None:
+            llava_model_args["revision"] = revision
+        if local_files_only:
+            llava_model_args["local_files_only"] = True
 
         model_name = model_name if model_name is not None else get_model_name_from_path(pretrained)
 
@@ -132,6 +138,10 @@ class Llava_OneVision(lmms):
         config_kwargs = {}
         if cache_dir is not None:
             config_kwargs["cache_dir"] = cache_dir
+        if revision is not None:
+            config_kwargs["revision"] = revision
+        if local_files_only:
+            config_kwargs["local_files_only"] = True
         cfg_pretrained = AutoConfig.from_pretrained(self.pretrained, **config_kwargs)
 
         llava_model_args["overwrite_config"] = overwrite_config

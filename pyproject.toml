@@ -76,6 +76,8 @@ dependencies = [
     "python-dotenv",
     "qwen-vl-utils>=0.0.14",
     "ipykernel>=6.31.0",
+    "matplotlib>=3.9.4",
+    "seaborn>=0.13.2",
 ]
 
 [project.optional-dependencies]

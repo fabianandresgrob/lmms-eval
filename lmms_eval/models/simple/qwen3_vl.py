@@ -1,9 +1,6 @@
-import base64
 import re
-from io import BytesIO
 from typing import List, Optional, Tuple, Union
 
-import decord
 import numpy as np
 import torch
 from accelerate import Accelerator, DistributedType
@@ -24,11 +21,6 @@ from lmms_eval.api.registry import register_model
 from lmms_eval.models.model_utils.reasoning_model_utils import (
     parse_reasoning_model_answer,
 )
-
-try:
-    from qwen_vl_utils import process_vision_info
-except ImportError:
-    eval_logger.warning("Failed to import qwen_vl_utils; Please install it via `pip install qwen-vl-utils`")
 
 
 @register_model("qwen3_vl")
@@ -56,6 +48,8 @@ class Qwen3_VL(lmms):
         interleave_visuals: Optional[bool] = False,
         reasoning_prompt: Optional[str] = None,
         cache_dir: Optional[str] = None,
+        revision: Optional[str] = None,
+        local_files_only: bool = False,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -96,6 +90,10 @@ class Qwen3_VL(lmms):
 
         if cache_dir is not None:
             model_kwargs["cache_dir"] = cache_dir
+        if revision is not None:
+            model_kwargs["revision"] = revision
+        if local_files_only:
+            model_kwargs["local_files_only"] = True
 
         # check whether its an MoE model
         match = re.search(r"A\d+B", pretrained)
@@ -113,12 +111,20 @@ class Qwen3_VL(lmms):
         processor_kwargs = {"max_pixels": max_pixels, "min_pixels": min_pixels}
         if cache_dir is not None:
             processor_kwargs["cache_dir"] = cache_dir
+        if revision is not None:
+            processor_kwargs["revision"] = revision
+        if local_files_only:
+            processor_kwargs["local_files_only"] = True
 
         self.processor = AutoProcessor.from_pretrained(pretrained, **processor_kwargs)
 
         tokenizer_kwargs = {}
         if cache_dir is not None:
             tokenizer_kwargs["cache_dir"] = cache_dir
+        if revision is not None:
+            tokenizer_kwargs["revision"] = revision
+        if local_files_only:
+            tokenizer_kwargs["local_files_only"] = True
 
         self._tokenizer = AutoTokenizer.from_pretrained(pretrained, **tokenizer_kwargs)
         self.system_prompt = system_prompt
@@ -256,18 +262,10 @@ class Qwen3_VL(lmms):
                 if visual_list[i] is not None:
                     for visual in visual_list[i]:
                         if isinstance(visual, str) and visual.endswith((".mp4", ".avi", ".mov")):  # Video file
-                            vr = decord.VideoReader(visual)
-                            first_frame = vr[0].asnumpy()
-                            height, width = first_frame.shape[:2]
-                            # max_pixels = height * width
-                            processed_visuals.append({"type": "video", "video": visual, "max_pixels": self.max_pixels, "min_pixels": self.min_pixels})
+                            processed_visuals.append({"type": "video", "video": visual})
                         elif isinstance(visual, Image.Image):  # Handle both single and multiple images
-                            base64_image = visual.convert("RGB")
-                            buffer = BytesIO()
-                            base64_image.save(buffer, format="JPEG")
-                            base64_bytes = base64.b64encode(buffer.getvalue())
-                            base64_string = base64_bytes.decode("utf-8")
-                            processed_visuals.append({"type": "image", "image": f"data:image/jpeg;base64,{base64_string}", "max_pixels": self.max_pixels, "min_pixels": self.min_pixels})
+                            # Qwen3-VL processor can handle PIL images directly
+                            processed_visuals.append({"type": "image", "image": visual})
 
                 if self.interleave_visuals is False:
                     message.append(
@@ -299,20 +297,19 @@ class Qwen3_VL(lmms):
                     )
 
                 batched_messages.append(message)
-            texts = self.processor.apply_chat_template(batched_messages, tokenize=False, add_generation_prompt=True)
-            image_inputs, video_inputs = process_vision_info(batched_messages)
-            if video_inputs is not None:
-                total_frames = video_inputs[0].shape[0]
-                indices = np.linspace(0, total_frames - 1, self.max_num_frames, dtype=int)
-                # Ensure unique indices if linspace produces duplicates for few frames
-                indices = np.unique(indices)
-                # Append the last frame index if not already included
-                if total_frames - 1 not in indices:
-                    indices = np.append(indices, total_frames - 1)
-                    indices = np.unique(indices)  # Ensure uniqueness again
-                video_inputs[0] = video_inputs[0][indices]
+
+            # Use the new Qwen3-VL approach: apply_chat_template handles everything
+            # including tokenization and image processing in one call
             padding_side = "left" if self.batch_size > 1 else "right"
-            inputs = self.processor(text=texts, images=image_inputs, videos=video_inputs, padding=True, padding_side=padding_side, return_tensors="pt")
+            inputs = self.processor.apply_chat_template(
+                batched_messages,
+                tokenize=True,
+                add_generation_prompt=True,
+                padding=True,
+                padding_side=padding_side,
+                return_dict=True,
+                return_tensors="pt",
+            )
 
             if self.device_map == "auto":
                 inputs = inputs.to("cuda")
