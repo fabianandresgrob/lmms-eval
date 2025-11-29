@@ -1,0 +1,776 @@
+[
+  {
+    "model": "Qwen/Qwen2.5-VL-3B-Instruct",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.5416666666666666,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.82,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen2.5-VL-3B-Instruct",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.5016666666666667,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.74,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen2.5-VL-3B-Instruct",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.19863505747126436,
+    "accuracy_stderr,none": 0.0075628679350518155,
+    "bias_ratio,none": 0.5129310344827587,
+    "bias_ratio_stderr,none": 0.009474757741524856,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5012626262626263,
+      "Game Boards": 0.11904761904761904,
+      "Patterned Grid": 0.13988095238095238,
+      "Chess Pieces": 0.0,
+      "Logos": 0.07971014492753623,
+      "Flags": 0.23333333333333334,
+      "Animals": 0.0,
+      "overall": 0.19863505747126436
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.5466666666666666,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8733333333333333,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.515,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8266666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.22988505747126436,
+    "accuracy_stderr,none": 0.007975842023943927,
+    "bias_ratio,none": 0.5955459770114943,
+    "bias_ratio_stderr,none": 0.009303269978613594,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5744949494949495,
+      "Game Boards": 0.08333333333333333,
+      "Patterned Grid": 0.14285714285714285,
+      "Chess Pieces": 0.0,
+      "Logos": 0.10386473429951691,
+      "Flags": 0.32083333333333336,
+      "Animals": 0.005494505494505495,
+      "overall": 0.22988505747126436
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-1B",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.3416666666666667,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.5433333333333333,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-1B",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.38166666666666665,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.4866666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-1B",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.19181034482758622,
+    "accuracy_stderr,none": 0.007463388576396808,
+    "bias_ratio,none": 0.4709051724137931,
+    "bias_ratio_stderr,none": 0.009461868002889926,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5441919191919192,
+      "Game Boards": 0.13690476190476192,
+      "Patterned Grid": 0.0625,
+      "Chess Pieces": 0.0,
+      "Logos": 0.00966183574879227,
+      "Flags": 0.22083333333333333,
+      "Animals": 0.003663003663003663,
+      "overall": 0.19181034482758622
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-2B",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.5916666666666667,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.65,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-2B",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.5166666666666667,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.7066666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-2B",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.23958333333333334,
+    "accuracy_stderr,none": 0.008090912637611115,
+    "bias_ratio,none": 0.5391522988505747,
+    "bias_ratio_stderr,none": 0.00944882575343826,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5277777777777778,
+      "Game Boards": 0.07142857142857142,
+      "Patterned Grid": 0.1875,
+      "Chess Pieces": 0.020833333333333332,
+      "Logos": 0.20531400966183574,
+      "Flags": 0.31666666666666665,
+      "Animals": 0.01282051282051282,
+      "overall": 0.23958333333333334
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-8B",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.5183333333333333,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8366666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-8B",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.4533333333333333,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.7466666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-8B",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.2065373563218391,
+    "accuracy_stderr,none": 0.007673719958203007,
+    "bias_ratio,none": 0.5836925287356322,
+    "bias_ratio_stderr,none": 0.009344209492313245,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.494949494949495,
+      "Game Boards": 0.09523809523809523,
+      "Patterned Grid": 0.08333333333333333,
+      "Chess Pieces": 0.0625,
+      "Logos": 0.178743961352657,
+      "Flags": 0.19583333333333333,
+      "Animals": 0.0,
+      "overall": 0.2065373563218391
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-9B",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.42333333333333334,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.7166666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-9B",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.42833333333333334,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.77,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-9B",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.20007183908045978,
+    "accuracy_stderr,none": 0.007583363466741721,
+    "bias_ratio,none": 0.5129310344827587,
+    "bias_ratio_stderr,none": 0.009474757741524826,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5441919191919192,
+      "Game Boards": 0.023809523809523808,
+      "Patterned Grid": 0.1488095238095238,
+      "Chess Pieces": 0.0,
+      "Logos": 0.016908212560386472,
+      "Flags": 0.2708333333333333,
+      "Animals": 0.0,
+      "overall": 0.20007183908045978
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-14B",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.5433333333333333,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.83,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-14B",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.4683333333333333,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8133333333333334,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-14B",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.18857758620689655,
+    "accuracy_stderr,none": 0.00741501327808821,
+    "bias_ratio,none": 0.6867816091954023,
+    "bias_ratio_stderr,none": 0.00879177069377156,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5088383838383839,
+      "Game Boards": 0.03571428571428571,
+      "Patterned Grid": 0.2261904761904762,
+      "Chess Pieces": 0.0,
+      "Logos": 0.007246376811594203,
+      "Flags": 0.14166666666666666,
+      "Animals": 0.005494505494505495,
+      "overall": 0.18857758620689655
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-38B",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.5733333333333334,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.83,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-38B",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.5133333333333333,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.85,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "OpenGVLab/InternVL3-38B",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.15660919540229884,
+    "accuracy_stderr,none": 0.006889162942637936,
+    "bias_ratio,none": 0.5642959770114943,
+    "bias_ratio_stderr,none": 0.009399238265100104,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5,
+      "Game Boards": 0.011904761904761904,
+      "Patterned Grid": 0.002976190476190476,
+      "Chess Pieces": 0.0,
+      "Logos": 0.007246376811594203,
+      "Flags": 0.14166666666666666,
+      "Animals": 0.0,
+      "overall": 0.15660919540229884
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "lmms-lab/llava-onevision-qwen2-0.5b-ov",
+    "task": "vilp",
+    "status": "failed",
+    "error": "Unexpected error: NameError: name 'get_model_name_from_path' is not defined"
+  },
+  {
+    "model": "lmms-lab/llava-onevision-qwen2-0.5b-ov",
+    "task": "vilp_without_fact",
+    "status": "failed",
+    "error": "Unexpected error: NameError: name 'get_model_name_from_path' is not defined"
+  },
+  {
+    "model": "lmms-lab/llava-onevision-qwen2-0.5b-ov",
+    "task": "vlms_are_biased",
+    "status": "failed",
+    "error": "Unexpected error: NameError: name 'get_model_name_from_path' is not defined"
+  },
+  {
+    "model": "lmms-lab/llava-onevision-qwen2-7b-ov",
+    "task": "vilp",
+    "status": "failed",
+    "error": "Unexpected error: NameError: name 'get_model_name_from_path' is not defined"
+  },
+  {
+    "model": "lmms-lab/llava-onevision-qwen2-7b-ov",
+    "task": "vilp_without_fact",
+    "status": "failed",
+    "error": "Unexpected error: NameError: name 'get_model_name_from_path' is not defined"
+  },
+  {
+    "model": "lmms-lab/llava-onevision-qwen2-7b-ov",
+    "task": "vlms_are_biased",
+    "status": "failed",
+    "error": "Unexpected error: NameError: name 'get_model_name_from_path' is not defined"
+  },
+  {
+    "model": "google/gemma-3-4b-it",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.61,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8133333333333334,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "google/gemma-3-4b-it",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.585,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8133333333333334,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "google/gemma-3-4b-it",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.18031609195402298,
+    "accuracy_stderr,none": 0.0072875885447204304,
+    "bias_ratio,none": 0.4885057471264368,
+    "bias_ratio_stderr,none": 0.009475423173821005,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5252525252525253,
+      "Game Boards": 0.0,
+      "Patterned Grid": 0.03571428571428571,
+      "Chess Pieces": 0.0,
+      "Logos": 0.08695652173913043,
+      "Flags": 0.15833333333333333,
+      "Animals": 0.0,
+      "overall": 0.18031609195402298
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "google/gemma-3-12b-it",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.655,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8066666666666666,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "google/gemma-3-12b-it",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.5233333333333333,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8366666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "google/gemma-3-12b-it",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.1853448275862069,
+    "accuracy_stderr,none": 0.007365810504033494,
+    "bias_ratio,none": 0.6386494252873564,
+    "bias_ratio_stderr,none": 0.009106238791763779,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5315656565656566,
+      "Game Boards": 0.07738095238095238,
+      "Patterned Grid": 0.08035714285714286,
+      "Chess Pieces": 0.0,
+      "Logos": 0.06763285024154589,
+      "Flags": 0.1125,
+      "Animals": 0.0,
+      "overall": 0.1853448275862069
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "google/gemma-3-27b-it",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.66,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.85,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "google/gemma-3-27b-it",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.49333333333333335,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.86,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "google/gemma-3-27b-it",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.11602011494252873,
+    "accuracy_stderr,none": 0.0060705946372215614,
+    "bias_ratio,none": 0.5592672413793104,
+    "bias_ratio_stderr,none": 0.009411107918067943,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.3055555555555556,
+      "Game Boards": 0.07142857142857142,
+      "Patterned Grid": 0.15476190476190477,
+      "Chess Pieces": 0.0,
+      "Logos": 0.012077294685990338,
+      "Flags": 0.05,
+      "Animals": 0.0,
+      "overall": 0.11602011494252873
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-2B-Instruct",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.57,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.7433333333333333,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-2B-Instruct",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.61,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-2B-Instruct",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.23419540229885058,
+    "accuracy_stderr,none": 0.00802770794215261,
+    "bias_ratio,none": 0.579382183908046,
+    "bias_ratio_stderr,none": 0.0093577146338471,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5012626262626263,
+      "Game Boards": 0.011904761904761904,
+      "Patterned Grid": 0.21726190476190477,
+      "Chess Pieces": 0.0,
+      "Logos": 0.2777777777777778,
+      "Flags": 0.25,
+      "Animals": 0.009157509157509158,
+      "overall": 0.23419540229885058
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-4B-Instruct",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.6483333333333333,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.87,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-4B-Instruct",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.545,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8466666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-4B-Instruct",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.22880747126436782,
+    "accuracy_stderr,none": 0.007962691759948175,
+    "bias_ratio,none": 0.6232040229885057,
+    "bias_ratio_stderr,none": 0.009185687141649244,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5820707070707071,
+      "Game Boards": 0.005952380952380952,
+      "Patterned Grid": 0.18154761904761904,
+      "Chess Pieces": 0.0,
+      "Logos": 0.1497584541062802,
+      "Flags": 0.20833333333333334,
+      "Animals": 0.003663003663003663,
+      "overall": 0.22880747126436782
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-8B-Instruct",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.6666666666666666,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8266666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-8B-Instruct",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.515,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8133333333333334,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-8B-Instruct",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.1932471264367816,
+    "accuracy_stderr,none": 0.007484627305855092,
+    "bias_ratio,none": 0.6526580459770115,
+    "bias_ratio_stderr,none": 0.009025366914056008,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5227272727272727,
+      "Game Boards": 0.05357142857142857,
+      "Patterned Grid": 0.13988095238095238,
+      "Chess Pieces": 0.0,
+      "Logos": 0.036231884057971016,
+      "Flags": 0.18333333333333332,
+      "Animals": 0.016483516483516484,
+      "overall": 0.1932471264367816
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-32B-Instruct",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.63,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8766666666666667,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-32B-Instruct",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.545,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.8433333333333334,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-32B-Instruct",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.19145114942528735,
+    "accuracy_stderr,none": 0.007458053903221757,
+    "bias_ratio,none": 0.6332614942528736,
+    "bias_ratio_stderr,none": 0.009135097628241535,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.5126262626262627,
+      "Game Boards": 0.047619047619047616,
+      "Patterned Grid": 0.0,
+      "Chess Pieces": 0.0,
+      "Logos": 0.06763285024154589,
+      "Flags": 0.1875,
+      "Animals": 0.08424908424908426,
+      "overall": 0.19145114942528735
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-2B-Thinking",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.0,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.0,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-2B-Thinking",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.0,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.0,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-2B-Thinking",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.0035919540229885057,
+    "accuracy_stderr,none": 0.0011340374434765962,
+    "bias_ratio,none": 0.04992816091954023,
+    "bias_ratio_stderr,none": 0.004128520108325497,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.0,
+      "Game Boards": 0.0,
+      "Patterned Grid": 0.02976190476190476,
+      "Chess Pieces": 0.0,
+      "Logos": 0.0,
+      "Flags": 0.0,
+      "Animals": 0.0,
+      "overall": 0.0035919540229885057
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-8B-Thinking",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.0,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.0,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-8B-Thinking",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.0,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.0,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-8B-Thinking",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.00035919540229885057,
+    "accuracy_stderr,none": 0.00035919540229885957,
+    "bias_ratio,none": 0.01867816091954023,
+    "bias_ratio_stderr,none": 0.0025663517719224102,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.0,
+      "Game Boards": 0.0,
+      "Patterned Grid": 0.002976190476190476,
+      "Chess Pieces": 0.0,
+      "Logos": 0.0,
+      "Flags": 0.0,
+      "Animals": 0.0,
+      "overall": 0.00035919540229885057
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-32B-Thinking",
+    "task": "vilp",
+    "status": "success",
+    "alias": "vilp",
+    "vilp_score,none": 0.0,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.0,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-32B-Thinking",
+    "task": "vilp_without_fact",
+    "status": "success",
+    "alias": "vilp_without_fact",
+    "vilp_score,none": 0.0,
+    "vilp_score_stderr,none": "N/A",
+    "vilp_prior,none": 0.0,
+    "vilp_prior_stderr,none": "N/A"
+  },
+  {
+    "model": "Qwen/Qwen3-VL-32B-Thinking",
+    "task": "vlms_are_biased",
+    "status": "success",
+    "alias": "vlms_are_biased",
+    "accuracy,none": 0.0017959770114942528,
+    "accuracy_stderr,none": 0.0008026079209005022,
+    "bias_ratio,none": 0.03125,
+    "bias_ratio_stderr,none": 0.0032981793287595574,
+    "accuracy_by_topic,none": {
+      "Optical Illusion": 0.0,
+      "Game Boards": 0.0,
+      "Patterned Grid": 0.008928571428571428,
+      "Chess Pieces": 0.0,
+      "Logos": 0.0,
+      "Flags": 0.008333333333333333,
+      "Animals": 0.0,
+      "overall": 0.0017959770114942528
+    },
+    "accuracy_by_topic_stderr,none": "N/A"
+  }
+]

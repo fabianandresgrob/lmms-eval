@@ -1,0 +1,8 @@
+Error: Unexpected error: AttributeError: 'InternLM2ForCausalLM' object has no attribute 'generate'
+
+Timestamp: 2025-11-27T23:33:05.416163
+Model: internvl2 (OpenGVLab/InternVL3-9B)
+Task: vlms_are_biased
+
+Traceback:
+NoneType: None

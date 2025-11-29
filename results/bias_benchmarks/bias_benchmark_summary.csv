@@ -1,0 +1,9 @@
+Model,Size (B),Family,VILP Prior,VILP Score,VILP Prior (NF),Accuracy,Bias Ratio
+InternVL3-1B,1.0,InternVL,0.543,0.342,0.487,0.192,0.471
+InternVL3-2B,2.0,InternVL,0.650,0.592,0.707,0.240,0.539
+Qwen2.5-VL-3B-Instruct,3.0,Qwen,0.820,0.542,0.740,0.199,0.513
+Qwen2.5-VL-7B-Instruct,7.0,Qwen,0.873,0.547,0.827,0.230,0.596
+InternVL3-8B,8.0,InternVL,0.837,0.518,0.747,0.207,0.584
+InternVL3-9B,9.0,InternVL,0.717,0.423,0.770,0.200,0.513
+InternVL3-14B,14.0,InternVL,0.830,0.543,0.813,0.189,0.687
+InternVL3-38B,38.0,InternVL,0.830,0.573,0.850,0.157,0.564

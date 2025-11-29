@@ -1,0 +1,8 @@
+Error: Unexpected error: OSError: PermissionError at /lustre/groups/eml/workspace/hf_models/hub/models--OpenGVLab--InternVL3-14B/snapshots/419aa10d2db7da6c64382ad3124f79a60cec42aa when downloading OpenGVLab/InternVL3-14B. Check cache directory permissions. Common causes: 1) another user is downloading the same model (please wait); 2) a previous download was canceled and the lock file needs manual removal.
+
+Timestamp: 2025-11-27T18:32:58.057391
+Model: internvl2 (OpenGVLab/InternVL3-14B)
+Task: vilp
+
+Traceback:
+NoneType: None
