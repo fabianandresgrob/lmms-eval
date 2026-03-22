@@ -1,6 +1,6 @@
 """Utility functions for ViLP (Probing Visual Language Priors in VLMs) benchmark."""
 
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -292,7 +292,7 @@ def normalize_output(output: str) -> str:
 
 
 def vilp_doc_to_text(
-    doc: dict[str, Any], lmms_eval_specific_kwargs: dict[str, str] | None = None
+    doc: dict[str, Any], lmms_eval_specific_kwargs: Optional[dict[str, str]] = None
 ) -> str:
     """Format question text.
 
