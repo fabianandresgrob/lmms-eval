@@ -22,6 +22,13 @@ class VLindBenchTask(ConfigurableTask):
     doc_to_visual(), so the full ~5GB download is cached in HF_HOME and not held in RAM.
     """
 
+    def __init__(self, config: Optional[dict] = None, **kwargs) -> None:
+        # The task loader passes `class` in the config dict; TaskConfig doesn't
+        # know about it, so we remove it before calling super().__init__().
+        if config is not None:
+            config = {k: v for k, v in config.items() if k != "class"}
+        super().__init__(config=config, **kwargs)
+
     def download(self, dataset_kwargs: Optional[dict] = None) -> None:
         from huggingface_hub import snapshot_download
 
