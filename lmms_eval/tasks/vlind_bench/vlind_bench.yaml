@@ -1,0 +1,41 @@
+class: !function lmms_eval.tasks.vlind_bench.VLindBenchTask
+task: "vlind_bench"
+dataset_path: klee972/VLind-Bench   # downloaded by VLindBenchTask.download(), not load_dataset()
+test_split: train
+output_type: generate_until
+
+doc_to_visual: !function utils.vlind_bench_doc_to_visual
+doc_to_text: !function utils.vlind_bench_doc_to_text
+doc_to_target: !function utils.vlind_bench_doc_to_target
+
+process_results: !function utils.vlind_bench_process_results
+
+generation_kwargs:
+  max_new_tokens: 16
+  temperature: 0
+  top_p: 1.0
+  num_beams: 1
+  do_sample: false
+
+metric_list:
+  - metric: s_ck
+    aggregation: !function utils.aggregate_s_ck
+    higher_is_better: true
+  - metric: s_vp
+    aggregation: !function utils.aggregate_s_vp
+    higher_is_better: true
+  - metric: s_cb
+    aggregation: !function utils.aggregate_s_cb
+    higher_is_better: true
+  - metric: s_lp
+    aggregation: !function utils.aggregate_s_lp
+    higher_is_better: false
+  - metric: accuracy_lp
+    aggregation: !function utils.aggregate_accuracy_lp
+    higher_is_better: false
+
+metadata:
+  version: 1.0
+  description: "VLind-Bench: Measuring Language Prior Blindness in Large Vision-Language Models"
+  paper_url: "https://arxiv.org/abs/2406.08702"
+  original_dataset: "klee972/VLind-Bench"
