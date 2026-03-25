@@ -15,7 +15,7 @@ from loguru import logger as eval_logger
 from PIL import Image
 from torchvision.transforms.functional import InterpolationMode
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer, PreTrainedModel
+from transformers import AutoModel, AutoTokenizer, GenerationConfig, GenerationMixin, PreTrainedModel
 
 from lmms_eval.api.instance import Instance
 from lmms_eval.api.model import lmms
@@ -32,6 +32,36 @@ if _orig_mark_tied is not None:
 
     PreTrainedModel.mark_tied_weights_as_initialized = _safe_mark_tied
 from lmms_eval.api.registry import register_model
+
+def _patch_language_model_generate(model):
+    """Patch language_model to inherit GenerationMixin if it lacks generate().
+
+    InternVL3 models using InternLM2 (e.g. 9B/14B/38B) have a custom
+    InternLM2ForCausalLM that doesn't inherit GenerationMixin.  Since
+    transformers v4.50, PreTrainedModel no longer provides generate().
+    """
+    if not hasattr(model, "language_model"):
+        return
+    lm = model.language_model
+    lm_cls = type(lm)
+    if hasattr(lm_cls, "generate"):
+        return
+    eval_logger.info(f"Patching {lm_cls.__name__} to include GenerationMixin")
+    patched_cls = type(lm_cls.__name__, (GenerationMixin,) + lm_cls.__bases__, dict(lm_cls.__dict__))
+    lm.__class__ = patched_cls
+    if lm.generation_config is None:
+        lm.generation_config = GenerationConfig()
+    # InternLM2's prepare_inputs_for_generation crashes on empty past_key_values
+    _orig_prepare = lm.prepare_inputs_for_generation
+
+    def _safe_prepare(input_ids, past_key_values=None, attention_mask=None, inputs_embeds=None, **kwargs):
+        if past_key_values is not None:
+            if len(past_key_values) == 0 or past_key_values[0] is None or past_key_values[0][0] is None:
+                past_key_values = None
+        return _orig_prepare(input_ids, past_key_values, attention_mask, inputs_embeds, **kwargs)
+
+    lm.prepare_inputs_for_generation = _safe_prepare
+
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
@@ -391,6 +421,8 @@ class InternVL3(lmms):
                     trust_remote_code=True,
                 ).eval()
                 self._model = dispatch_model(self._model, device_map=self.device_map)
+        # Patch InternLM2-based models that lack GenerationMixin (transformers v4.50+).
+        _patch_language_model_generate(self._model)
         self._config = self._model.config
         self._tokenizer = AutoTokenizer.from_pretrained(self.path, trust_remote_code=True, use_fast=False)
 
