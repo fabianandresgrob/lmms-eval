@@ -15,10 +15,22 @@ from loguru import logger as eval_logger
 from PIL import Image
 from torchvision.transforms.functional import InterpolationMode
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer, PreTrainedModel
 
 from lmms_eval.api.instance import Instance
 from lmms_eval.api.model import lmms
+
+# Patch: InternVL3's remote code targets an older transformers and lacks
+# all_tied_weights_keys.  Newer transformers calls it during from_pretrained.
+_orig_mark_tied = getattr(PreTrainedModel, "mark_tied_weights_as_initialized", None)
+if _orig_mark_tied is not None:
+
+    def _safe_mark_tied(self, loading_info):
+        if not hasattr(self, "all_tied_weights_keys"):
+            self.all_tied_weights_keys = {}
+        return _orig_mark_tied(self, loading_info)
+
+    PreTrainedModel.mark_tied_weights_as_initialized = _safe_mark_tied
 from lmms_eval.api.registry import register_model
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
