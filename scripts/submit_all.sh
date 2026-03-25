@@ -29,9 +29,10 @@ for arg in "$@"; do
 done
 
 # ---- Model definitions ----
-# Format: family|model_type|pretrained_id|model_name|num_gpus|batch_size
+# Format: family|model_type|pretrained_id|model_name|num_gpus|batch_size|conda_env
 # batch_size=1 for all: cross-task batching bug causes IndexError when batch_size>1
 # with multiple tasks running in the same job.
+# conda_env is optional (defaults to "lmms-eval").
 MODELS=(
     # InternVL3 (batch_size=1 enforced by model)
     "internvl3|internvl3|OpenGVLab/InternVL3-1B|internvl3-1b|1|1"
@@ -54,10 +55,10 @@ MODELS=(
     "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-8B-Instruct|qwen3vl-8b|1|1"
     "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-32B-Instruct|qwen3vl-32b|4|1"
 
-    # LLaVA-OneVision (batch_size=1 enforced by model)
-    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-0.5b-ov|llava-ov-0.5b|1|1"
-    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-7b-ov|llava-ov-7b|1|1"
-    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-72b-ov|llava-ov-72b|4|1"
+    # LLaVA-OneVision (needs lmms-eval-ov env with LLaVA-NeXT)
+    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-0.5b-ov|llava-ov-0.5b|1|1|lmms-eval-ov"
+    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-7b-ov|llava-ov-7b|1|1|lmms-eval-ov"
+    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-72b-ov|llava-ov-72b|4|1|lmms-eval-ov"
 
     # Gemma-3 (batch_size>1 breaks when running multiple tasks)
     "gemma3|gemma3|google/gemma-3-4b-it|gemma3-4b|1|1"
@@ -90,7 +91,7 @@ SKIPPED=0
 # Submit 1-GPU jobs first (faster backfill), then multi-GPU
 for pass in 1 4; do
     for entry in "${MODELS[@]}"; do
-        IFS='|' read -r family model_type pretrained model_name num_gpus batch_size <<< "$entry"
+        IFS='|' read -r family model_type pretrained model_name num_gpus batch_size conda_env <<< "$entry"
 
         # Filter by family if specified
         if [ -n "$FAMILY_FILTER" ] && [ "$family" != "$FAMILY_FILTER" ]; then
@@ -113,8 +114,13 @@ for pass in 1 4; do
         RESOURCES=$(get_resources "$num_gpus" "$model_name")
         JOB_NAME="eval-${model_name}"
 
+        EXPORT_VARS="ALL,MODEL_TYPE=$model_type,PRETRAINED=$pretrained,MODEL_NAME=$model_name,BATCH_SIZE=$batch_size"
+        if [ -n "$conda_env" ]; then
+            EXPORT_VARS="$EXPORT_VARS,CONDA_ENV=$conda_env"
+        fi
+
         CMD="sbatch --job-name=$JOB_NAME $RESOURCES \
-            --export=ALL,MODEL_TYPE=$model_type,PRETRAINED=$pretrained,MODEL_NAME=$model_name,BATCH_SIZE=$batch_size \
+            --export=$EXPORT_VARS \
             $SLURM_SCRIPT"
 
         if [ "$DRY_RUN" = true ]; then

@@ -33,7 +33,7 @@ export LMMS_EVAL_DATASETS_CACHE="$SCRATCH/.cache/huggingface/datasets"
 
 # ---- Activate environment ----
 source ~/miniconda3/etc/profile.d/conda.sh
-conda activate lmms-eval
+conda activate "${CONDA_ENV:-lmms-eval}"
 
 # ---- CUDA setup ----
 TORCH_CUDA_VER=$(python -c "import torch; print(torch.version.cuda)")
