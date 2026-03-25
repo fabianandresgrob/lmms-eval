@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 import torch
 import torchvision.transforms as T
-from accelerate import Accelerator, DistributedType
+from accelerate import Accelerator, DistributedType, dispatch_model
 from accelerate.state import AcceleratorState
 from accelerate.utils import InitProcessGroupKwargs
 from decord import VideoReader, cpu
@@ -340,15 +340,15 @@ class InternVL3(lmms):
                 trust_remote_code=True,
             ).eval().to(self._device)
         else:
-            # Multi-GPU: dict-based device_map distributes layers without meta tensors.
+            # Multi-GPU: load to CPU first (no device_map avoids meta-tensor init),
+            # then dispatch layers to GPUs. Requires ~2x model size in CPU RAM.
             self._model = AutoModel.from_pretrained(
                 self.path,
                 torch_dtype=torch.bfloat16,
-                low_cpu_mem_usage=True,
                 use_flash_attn=use_flash_attn,
                 trust_remote_code=True,
-                device_map=self.device_map,
             ).eval()
+            self._model = dispatch_model(self._model, device_map=self.device_map)
         self._config = self._model.config
         self._tokenizer = AutoTokenizer.from_pretrained(self.path, trust_remote_code=True, use_fast=False)
 
