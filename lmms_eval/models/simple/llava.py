@@ -31,6 +31,17 @@ try:
         tokenizer_image_token,
     )
     from llava.model.builder import load_pretrained_model
+    from llava.model.language_model.llava_llama import LlavaLlamaForCausalLM
+
+    # Monkey-patch: new transformers passes cache_position to forward(), but
+    # LLaVA 1.5's LlavaLlamaForCausalLM.forward() doesn't accept it.
+    _orig_llava_forward = LlavaLlamaForCausalLM.forward
+
+    def _patched_llava_forward(self, *args, **kwargs):
+        kwargs.pop("cache_position", None)
+        return _orig_llava_forward(self, *args, **kwargs)
+
+    LlavaLlamaForCausalLM.forward = _patched_llava_forward
 except Exception as e:
     eval_logger.debug("LLaVA is not installed. Please install LLaVA to use this model.\nError: %s" % e)
 
