@@ -61,6 +61,13 @@ echo "  Results dir: $RESULTS_DIR/$MODEL_NAME"
 
 mkdir -p "$RESULTS_DIR" logs
 
+# Skip if results already exist (output is written only on successful completion)
+# Structure: $RESULTS_DIR/$MODEL_NAME/<model_name_sanitized>/<datetime>_results.json
+if compgen -G "$RESULTS_DIR/$MODEL_NAME"/*/*_results.json > /dev/null 2>&1; then
+    echo "$(date): Results already exist for $MODEL_NAME, skipping."
+    exit 0
+fi
+
 cd "$LMMS_EVAL_DIR"
 python -m lmms_eval \
     --model "$MODEL_TYPE" \
