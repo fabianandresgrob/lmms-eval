@@ -23,6 +23,7 @@ if [ -z "$SCRATCH" ]; then
 fi
 
 TASKS="${TASKS:-vlms_are_biased,vilp,vlind_bench}"
+BATCH_SIZE="${BATCH_SIZE:-1}"
 LMMS_EVAL_DIR="$HOME/projects/lmms-eval"
 RESULTS_DIR="$SCRATCH/results/lmms-eval"
 
@@ -54,6 +55,7 @@ echo "  Model type:  $MODEL_TYPE"
 echo "  Pretrained:  $PRETRAINED"
 echo "  Model name:  $MODEL_NAME"
 echo "  Tasks:       $TASKS"
+echo "  Batch size:  $BATCH_SIZE"
 echo "  GPUs:        $NUM_GPUS"
 echo "  Results dir: $RESULTS_DIR/$MODEL_NAME"
 
@@ -64,7 +66,7 @@ python -m lmms_eval \
     --model "$MODEL_TYPE" \
     --model_args "$MODEL_ARGS" \
     --tasks "$TASKS" \
-    --batch_size 1 \
+    --batch_size "$BATCH_SIZE" \
     --output_path "$RESULTS_DIR/$MODEL_NAME" \
     --log_samples \
     --verbosity INFO
