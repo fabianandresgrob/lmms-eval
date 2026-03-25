@@ -1,4 +1,5 @@
 import math
+from contextlib import contextmanager
 from datetime import timedelta
 from typing import List, Optional, Set, Tuple
 
@@ -219,6 +220,32 @@ def load_video(
     return pixel_values_tensor, num_patches_list
 
 
+@contextmanager
+def _fix_meta_linspace():
+    """Work around .item() crash on meta tensors during InternVL ViT init.
+
+    Transformers forces init_empty_weights() for sharded models (multiple
+    weight files), which creates all tensors on the meta device.  The InternVL
+    ViT code calls ``torch.linspace(...).item()`` during __init__, which
+    crashes on meta tensors.  This context manager patches torch.linspace to
+    fall back to CPU when the result would be a meta tensor.
+    """
+    _orig = torch.linspace
+
+    def _safe_linspace(*args, **kwargs):
+        t = _orig(*args, **kwargs)
+        if t.is_meta:
+            cpu_kwargs = {k: v for k, v in kwargs.items() if k != "device"}
+            return _orig(*args, device="cpu", **cpu_kwargs)
+        return t
+
+    torch.linspace = _safe_linspace
+    try:
+        yield
+    finally:
+        torch.linspace = _orig
+
+
 def split_model(model_name: str, num_layers: Optional[int] = None) -> dict:
     """Build an explicit layer→GPU device map for multi-GPU inference.
 
@@ -331,28 +358,27 @@ class InternVL3(lmms):
             # Passing any device_map string triggers meta-tensor init in newer transformers.
             self.device_map = None
 
-        # low_cpu_mem_usage=False is critical: newer transformers defaults it to True,
-        # which triggers init_empty_weights() → meta tensors → .item() crash in the ViT.
-        if self.device_map is None:
-            # Single-GPU: load to CPU, then move to device.
-            self._model = AutoModel.from_pretrained(
-                self.path,
-                torch_dtype=torch.bfloat16,
-                low_cpu_mem_usage=False,
-                use_flash_attn=use_flash_attn,
-                trust_remote_code=True,
-            ).eval().to(self._device)
-        else:
-            # Multi-GPU: load to CPU first (no device_map avoids meta-tensor init),
-            # then dispatch layers to GPUs. Requires ~2x model size in CPU RAM.
-            self._model = AutoModel.from_pretrained(
-                self.path,
-                torch_dtype=torch.bfloat16,
-                low_cpu_mem_usage=False,
-                use_flash_attn=use_flash_attn,
-                trust_remote_code=True,
-            ).eval()
-            self._model = dispatch_model(self._model, device_map=self.device_map)
+        # _fix_meta_linspace: transformers forces init_empty_weights() for sharded
+        # models regardless of low_cpu_mem_usage, which creates meta tensors.
+        # InternVL's ViT calls torch.linspace(...).item() during __init__ and crashes.
+        with _fix_meta_linspace():
+            if self.device_map is None:
+                # Single-GPU: load to CPU, then move to device.
+                self._model = AutoModel.from_pretrained(
+                    self.path,
+                    torch_dtype=torch.bfloat16,
+                    use_flash_attn=use_flash_attn,
+                    trust_remote_code=True,
+                ).eval().to(self._device)
+            else:
+                # Multi-GPU: load to CPU first, then dispatch layers to GPUs.
+                self._model = AutoModel.from_pretrained(
+                    self.path,
+                    torch_dtype=torch.bfloat16,
+                    use_flash_attn=use_flash_attn,
+                    trust_remote_code=True,
+                ).eval()
+                self._model = dispatch_model(self._model, device_map=self.device_map)
         self._config = self._model.config
         self._tokenizer = AutoTokenizer.from_pretrained(self.path, trust_remote_code=True, use_fast=False)
 
