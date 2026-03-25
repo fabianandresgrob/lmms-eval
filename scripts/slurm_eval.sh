@@ -29,7 +29,7 @@ RESULTS_DIR="$SCRATCH/results/lmms-eval"
 
 # ---- Activate environment ----
 source ~/miniconda3/etc/profile.d/conda.sh
-conda activate llava
+conda activate lmms-eval
 
 # ---- CUDA setup ----
 TORCH_CUDA_VER=$(python -c "import torch; print(torch.version.cuda)")

@@ -405,7 +405,8 @@ class InternVL3(lmms):
                     image_num = len(visuals)
                     dynamic_max_num = max(1, min(self.max_num, self.total_max_num // image_num))
 
-                    processed_visuals = [load_image(visual, max_num=dynamic_max_num).to(torch.bfloat16).to(self._device) for visual in visuals]
+                    target_device = next(self.model.parameters()).device if self._use_auto_device_map else self._device
+                    processed_visuals = [load_image(visual, max_num=dynamic_max_num).to(torch.bfloat16).to(target_device) for visual in visuals]
                     pixel_values = torch.cat(processed_visuals, dim=0)
                     num_patches_list = [v.size(0) for v in processed_visuals]
                     # count how many <image> tags are already in the text
@@ -456,7 +457,8 @@ class InternVL3(lmms):
                 dynamic_max_num = max(1, min(self.max_num, self.total_max_num // self.num_frame))
 
                 pixel_values, num_patches_list = load_video(video_path, num_segments=self.num_frame, max_num=dynamic_max_num)
-                pixel_values = pixel_values.to(torch.bfloat16).to(self._device)
+                target_device = next(self.model.parameters()).device if self._use_auto_device_map else self._device
+                pixel_values = pixel_values.to(torch.bfloat16).to(target_device)
                 video_prefix = "".join([f"Frame{i + 1}: <image>\n" for i in range(len(num_patches_list))])
                 question = video_prefix + contexts
 

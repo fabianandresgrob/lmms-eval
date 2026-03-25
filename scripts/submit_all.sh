@@ -36,7 +36,7 @@ MODELS=(
     # InternVL3 (batch_size=1 enforced by model)
     "internvl3|internvl3|OpenGVLab/InternVL3-1B|internvl3-1b|1|1"
     "internvl3|internvl3|OpenGVLab/InternVL3-2B|internvl3-2b|1|1"
-    "internvl3|internvl3|OpenGVLab/InternVL3-4B|internvl3-4b|1|1"
+    "internvl3|internvl3|OpenGVLab/InternVL3-9B|internvl3-9b|1|1"
     "internvl3|internvl3|OpenGVLab/InternVL3-8B|internvl3-8b|1|1"
     "internvl3|internvl3|OpenGVLab/InternVL3-14B|internvl3-14b|1|1"
     "internvl3|internvl3|OpenGVLab/InternVL3-38B|internvl3-38b|4|1"
