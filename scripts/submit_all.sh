@@ -74,10 +74,10 @@ get_resources() {
 
     if [ "$num_gpus" -eq 1 ]; then
         # Small models: tight resource requests for fast backfill
-        echo "--gres=gpu:1 --cpus-per-task=8 --mem=80G --time=03:00:00 --constraint=$GPU_CONSTRAINT"
+        echo "--gres=gpu:1 --cpus-per-task=8 --mem=80G --time=03:00:00 --constraint=\"$GPU_CONSTRAINT\""
     else
         # Large models: 4 GPUs
-        echo "--gres=gpu:4 --cpus-per-task=32 --mem=320G --time=08:00:00 --constraint=$GPU_CONSTRAINT"
+        echo "--gres=gpu:4 --cpus-per-task=32 --mem=320G --time=08:00:00 --constraint=\"$GPU_CONSTRAINT\""
     fi
 }
 
