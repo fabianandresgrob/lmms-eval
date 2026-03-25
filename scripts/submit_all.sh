@@ -17,6 +17,10 @@ SLURM_SCRIPT="$SCRIPT_DIR/slurm_eval.sh"
 FAMILY_FILTER=""
 DRY_RUN=false
 
+# Only schedule on nodes with >=80GB VRAM (A100 80GB or H100 80GB).
+# This avoids V100 32GB, A100 40GB, A100 MIG 20GB, and RTX 8000 48GB nodes.
+GPU_CONSTRAINT="a100_80gb|h100_80gb"
+
 for arg in "$@"; do
     case "$arg" in
         --dry-run) DRY_RUN=true ;;
@@ -68,10 +72,10 @@ get_resources() {
 
     if [ "$num_gpus" -eq 1 ]; then
         # Small models: tight resource requests for fast backfill
-        echo "--gres=gpu:h100:1 --cpus-per-task=8 --mem=80G --time=03:00:00"
+        echo "--gres=gpu:1 --cpus-per-task=8 --mem=80G --time=03:00:00 --constraint=$GPU_CONSTRAINT"
     else
-        # Large models: 4x H100
-        echo "--gres=gpu:h100:4 --cpus-per-task=32 --mem=320G --time=08:00:00"
+        # Large models: 4 GPUs
+        echo "--gres=gpu:4 --cpus-per-task=32 --mem=320G --time=08:00:00 --constraint=$GPU_CONSTRAINT"
     fi
 }
 
