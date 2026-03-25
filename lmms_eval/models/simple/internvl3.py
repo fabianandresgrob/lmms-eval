@@ -49,7 +49,7 @@ def _patch_language_model_generate(model):
     eval_logger.info(f"Patching {lm_cls.__name__} to include GenerationMixin")
     patched_cls = type(lm_cls.__name__, (GenerationMixin,) + lm_cls.__bases__, dict(lm_cls.__dict__))
     lm.__class__ = patched_cls
-    if lm.generation_config is None:
+    if getattr(lm, "generation_config", None) is None:
         lm.generation_config = GenerationConfig()
     # InternLM2's prepare_inputs_for_generation crashes on empty past_key_values
     _orig_prepare = lm.prepare_inputs_for_generation
