@@ -55,7 +55,7 @@ def _patch_language_model_generate(model):
     _orig_prepare = lm.prepare_inputs_for_generation
 
     def _safe_prepare(input_ids, past_key_values=None, attention_mask=None, inputs_embeds=None, **kwargs):
-        if past_key_values is not None:
+        if past_key_values is not None and isinstance(past_key_values, (list, tuple)):
             if len(past_key_values) == 0 or past_key_values[0] is None or past_key_values[0][0] is None:
                 past_key_values = None
         return _orig_prepare(input_ids, past_key_values, attention_mask, inputs_embeds, **kwargs)
