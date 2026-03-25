@@ -107,7 +107,10 @@ class Gemma3(lmms):
             self._rank = self.accelerator.local_process_index
             self._world_size = self.accelerator.num_processes
         else:
-            self.model.to(self._device)
+            # Don't move a model that was loaded with device_map="auto" —
+            # accelerate already distributed it across GPUs.
+            if self.device_map != "auto":
+                self.model.to(self._device)
             self._rank = 0
             self._world_size = 1
         self.model.eval()
