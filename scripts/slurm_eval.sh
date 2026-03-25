@@ -46,7 +46,9 @@ export PATH=$CUDA_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
 # ---- Determine model_args ----
-NUM_GPUS=$(nvidia-smi -L | wc -l)
+# Use torch to count GPUs — nvidia-smi -L ignores CUDA_VISIBLE_DEVICES and
+# would return all GPUs on the node, not just the ones allocated to this job.
+NUM_GPUS=$(python -c "import torch; print(torch.cuda.device_count())")
 MODEL_ARGS="pretrained=$PRETRAINED"
 if [ "$NUM_GPUS" -gt 1 ]; then
     MODEL_ARGS="${MODEL_ARGS},device_map=auto"
@@ -80,6 +82,7 @@ python -m lmms_eval \
     --batch_size "$BATCH_SIZE" \
     --output_path "$RESULTS_DIR/$MODEL_NAME" \
     --log_samples \
+    --force_simple \
     --verbosity INFO
 
 echo "$(date): Evaluation complete. Results in $RESULTS_DIR/$MODEL_NAME"

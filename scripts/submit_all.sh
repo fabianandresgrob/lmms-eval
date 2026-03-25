@@ -49,8 +49,10 @@ MODELS=(
     "qwen25vl|qwen2_5_vl|Qwen/Qwen2.5-VL-72B-Instruct|qwen25vl-72b|4|1"
 
     # Qwen3-VL
-    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-2B|qwen3vl-2b|1|1"
-    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-8B|qwen3vl-8b|1|1"
+    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-2B-Instruct|qwen3vl-2b|1|1"
+    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-4B-Instruct|qwen3vl-4b|1|1"
+    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-8B-Instruct|qwen3vl-8b|1|1"
+    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-32B-Instruct|qwen3vl-32b|4|1"
 
     # LLaVA-OneVision (batch_size=1 enforced by model)
     "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-0.5b-ov|llava-ov-0.5b|1|1"
