@@ -1,3 +1,4 @@
+import math
 from datetime import timedelta
 from typing import List, Optional, Set, Tuple
 
@@ -218,6 +219,56 @@ def load_video(
     return pixel_values_tensor, num_patches_list
 
 
+def split_model(model_name: str, num_layers: Optional[int] = None) -> dict:
+    """Build an explicit layer→GPU device map for multi-GPU inference.
+
+    Using a dict-based device_map instead of the string "auto" avoids the
+    meta-tensor initialization bug in newer transformers versions
+    (RuntimeError: Tensor.item() cannot be called on meta tensors).
+    """
+    device_map: dict = {}
+    world_size = torch.cuda.device_count()
+    if num_layers is None:
+        known = {
+            "InternVL3-1B": 24,
+            "InternVL3-2B": 24,
+            "InternVL3-8B": 32,
+            "InternVL3-9B": 32,
+            "InternVL3-14B": 40,
+            "InternVL3-38B": 64,
+            "InternVL3-78B": 80,
+        }
+        if model_name not in known:
+            raise ValueError(f"split_model: unknown model '{model_name}'. Pass num_layers explicitly.")
+        num_layers = known[model_name]
+
+    # GPU 0 also hosts ViT, so give it half the normal share of LM layers.
+    layers_per_gpu = math.ceil(num_layers / (world_size - 0.5))
+    gpu_layer_counts = [layers_per_gpu] * world_size
+    gpu_layer_counts[0] = math.ceil(gpu_layer_counts[0] * 0.5)
+
+    layer_idx = 0
+    for gpu_id, count in enumerate(gpu_layer_counts):
+        for _ in range(count):
+            device_map[f"language_model.model.layers.{layer_idx}"] = gpu_id
+            layer_idx += 1
+
+    # Non-layer modules all go on GPU 0.
+    for key in [
+        "vision_model",
+        "mlp1",
+        "language_model.model.tok_embeddings",  # InternLM2 backbone
+        "language_model.model.embed_tokens",    # LLaMA/Qwen backbone
+        "language_model.output",
+        "language_model.model.norm",
+        "language_model.lm_head",
+        f"language_model.model.layers.{num_layers - 1}",
+    ]:
+        device_map[key] = 0
+
+    return device_map
+
+
 @register_model("internvl3")
 class InternVL3(lmms):
     """InternVL3 model wrapper for lmms-eval.
@@ -270,20 +321,34 @@ class InternVL3(lmms):
             self.device_map = f"cuda:{accelerator.local_process_index}"
         elif accelerator.num_processes == 1 and device_map == "auto":
             self._device = torch.device("cuda:0")
-            self.device_map = "auto"
+            # Use explicit layer→GPU dict to avoid meta-tensor init bug in newer transformers.
+            model_name = pretrained.split("/")[-1]
+            self.device_map = split_model(model_name)
             self._use_auto_device_map = True
         else:
             self._device = torch.device(f"cuda:{accelerator.local_process_index}")
-            self.device_map = f"cuda:{accelerator.local_process_index}"
+            # Don't pass device_map for single-GPU — use .to(device) after loading.
+            # Passing any device_map string triggers meta-tensor init in newer transformers.
+            self.device_map = None
 
-        self._model = AutoModel.from_pretrained(
-            self.path,
-            torch_dtype=torch.bfloat16,
-            low_cpu_mem_usage=False,
-            use_flash_attn=use_flash_attn,
-            trust_remote_code=True,
-            device_map=self.device_map,
-        ).eval()
+        if self.device_map is None:
+            # Single-GPU: load to CPU, then move to device.
+            self._model = AutoModel.from_pretrained(
+                self.path,
+                torch_dtype=torch.bfloat16,
+                use_flash_attn=use_flash_attn,
+                trust_remote_code=True,
+            ).eval().to(self._device)
+        else:
+            # Multi-GPU: dict-based device_map distributes layers without meta tensors.
+            self._model = AutoModel.from_pretrained(
+                self.path,
+                torch_dtype=torch.bfloat16,
+                low_cpu_mem_usage=True,
+                use_flash_attn=use_flash_attn,
+                trust_remote_code=True,
+                device_map=self.device_map,
+            ).eval()
         self._config = self._model.config
         self._tokenizer = AutoTokenizer.from_pretrained(self.path, trust_remote_code=True, use_fast=False)
 
@@ -311,12 +376,12 @@ class InternVL3(lmms):
             self._rank = self.accelerator.local_process_index
             self._world_size = self.accelerator.num_processes
         elif self._use_auto_device_map:
-            eval_logger.info("Using auto device map for tensor parallelism")
+            eval_logger.info("Using split device map for tensor parallelism")
             self._rank = 0
             self._world_size = 1
         else:
             eval_logger.info(f"Using single device: {self._device}")
-            self.model.to(self._device)
+            # Model already moved to device during from_pretrained(..).to(device).
             self._rank = 0
             self._world_size = 1
 
