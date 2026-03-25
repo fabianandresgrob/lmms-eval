@@ -27,6 +27,10 @@ BATCH_SIZE="${BATCH_SIZE:-1}"
 LMMS_EVAL_DIR="$HOME/projects/lmms-eval"
 RESULTS_DIR="$SCRATCH/results/lmms-eval"
 
+# Override lmms-eval's remote-fs detection — keep datasets cache on $SCRATCH,
+# not redirected to /tmp (which is small on compute nodes).
+export LMMS_EVAL_DATASETS_CACHE="$SCRATCH/.cache/huggingface/datasets"
+
 # ---- Activate environment ----
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate lmms-eval
