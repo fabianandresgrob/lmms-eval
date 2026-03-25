@@ -331,11 +331,14 @@ class InternVL3(lmms):
             # Passing any device_map string triggers meta-tensor init in newer transformers.
             self.device_map = None
 
+        # low_cpu_mem_usage=False is critical: newer transformers defaults it to True,
+        # which triggers init_empty_weights() → meta tensors → .item() crash in the ViT.
         if self.device_map is None:
             # Single-GPU: load to CPU, then move to device.
             self._model = AutoModel.from_pretrained(
                 self.path,
                 torch_dtype=torch.bfloat16,
+                low_cpu_mem_usage=False,
                 use_flash_attn=use_flash_attn,
                 trust_remote_code=True,
             ).eval().to(self._device)
@@ -345,6 +348,7 @@ class InternVL3(lmms):
             self._model = AutoModel.from_pretrained(
                 self.path,
                 torch_dtype=torch.bfloat16,
+                low_cpu_mem_usage=False,
                 use_flash_attn=use_flash_attn,
                 trust_remote_code=True,
             ).eval()
