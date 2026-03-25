@@ -55,6 +55,11 @@ def _patch_language_model_generate(model):
     _orig_prepare = lm.prepare_inputs_for_generation
 
     def _safe_prepare(input_ids, past_key_values=None, attention_mask=None, inputs_embeds=None, **kwargs):
+        # InternLM2's prepare_inputs_for_generation expects legacy tuple-of-tuples
+        # KV cache, but newer transformers passes DynamicCache objects.
+        if past_key_values is not None and not isinstance(past_key_values, (list, tuple)):
+            # DynamicCache → legacy format: tuple of (key, value) per layer
+            past_key_values = past_key_values.to_legacy_cache()
         if past_key_values is not None and isinstance(past_key_values, (list, tuple)):
             if len(past_key_values) == 0 or past_key_values[0] is None or past_key_values[0][0] is None:
                 past_key_values = None
