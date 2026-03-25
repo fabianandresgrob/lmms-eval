@@ -1,3 +1,5 @@
+import functools
+
 import torch
 
 torch.backends.cuda.matmul.allow_tf32 = True
@@ -35,8 +37,11 @@ try:
 
     # Monkey-patch: new transformers passes cache_position to forward(), but
     # LLaVA 1.5's LlavaLlamaForCausalLM.forward() doesn't accept it.
+    # functools.wraps preserves the original signature so that transformers'
+    # generate() can inspect it and correctly route attention_mask etc.
     _orig_llava_forward = LlavaLlamaForCausalLM.forward
 
+    @functools.wraps(_orig_llava_forward)
     def _patched_llava_forward(self, *args, **kwargs):
         kwargs.pop("cache_position", None)
         return _orig_llava_forward(self, *args, **kwargs)
