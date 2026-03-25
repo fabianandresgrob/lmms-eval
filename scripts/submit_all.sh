@@ -102,6 +102,14 @@ for pass in 1 4; do
             continue
         fi
 
+        # Skip if results already exist
+        RESULTS_DIR="$SCRATCH/results/lmms-eval"
+        if compgen -G "$RESULTS_DIR/$model_name"/*/*_results.json > /dev/null 2>&1; then
+            echo "Skipping: $model_name (results already exist)"
+            SKIPPED=$((SKIPPED + 1))
+            continue
+        fi
+
         RESOURCES=$(get_resources "$num_gpus" "$model_name")
         JOB_NAME="eval-${model_name}"
 
@@ -120,4 +128,4 @@ for pass in 1 4; do
 done
 
 echo ""
-echo "Submitted $SUBMITTED jobs."
+echo "Submitted $SUBMITTED jobs, skipped $SKIPPED (already complete)."

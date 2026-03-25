@@ -279,7 +279,7 @@ class InternVL3(lmms):
         self._model = AutoModel.from_pretrained(
             self.path,
             torch_dtype=torch.bfloat16,
-            low_cpu_mem_usage=True,
+            low_cpu_mem_usage=False,
             use_flash_attn=use_flash_attn,
             trust_remote_code=True,
             device_map=self.device_map,
