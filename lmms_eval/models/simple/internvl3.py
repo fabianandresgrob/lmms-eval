@@ -1,3 +1,4 @@
+import functools
 import math
 from contextlib import contextmanager
 from datetime import timedelta
@@ -77,6 +78,21 @@ def _patch_language_model_generate(model):
         return _orig_prepare(input_ids, past_key_values, attention_mask, inputs_embeds, **kwargs)
 
     lm.prepare_inputs_for_generation = _safe_prepare
+
+    # InternLM2's forward() also subscripts past_key_values as tuples.
+    # Patch forward to convert DynamicCache → tuple-of-tuples at entry.
+    _orig_lm_forward = lm.forward
+
+    @functools.wraps(_orig_lm_forward)
+    def _safe_lm_forward(*args, **kwargs):
+        pkv = kwargs.get("past_key_values")
+        if pkv is not None and not isinstance(pkv, (list, tuple)):
+            if hasattr(pkv, "key_cache") and hasattr(pkv, "value_cache"):
+                cache = tuple(zip(pkv.key_cache, pkv.value_cache))
+                kwargs["past_key_values"] = cache if cache else None
+        return _orig_lm_forward(*args, **kwargs)
+
+    lm.forward = _safe_lm_forward
 
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
