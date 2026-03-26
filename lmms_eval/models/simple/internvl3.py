@@ -55,13 +55,23 @@ def _patch_language_model_generate(model):
     _orig_prepare = lm.prepare_inputs_for_generation
 
     def _safe_prepare(input_ids, past_key_values=None, attention_mask=None, inputs_embeds=None, **kwargs):
-        # InternLM2's prepare_inputs_for_generation expects legacy tuple-of-tuples
-        # KV cache, but newer transformers passes DynamicCache objects.
-        if past_key_values is not None and hasattr(past_key_values, "key_cache"):
-            past_key_values = tuple(
-                (k, v) for k, v in zip(past_key_values.key_cache, past_key_values.value_cache)
-            )
-        if past_key_values is not None and isinstance(past_key_values, (list, tuple)):
+        # InternLM2's prepare_inputs_for_generation expects legacy tuple-of-tuples,
+        # but newer transformers passes DynamicCache objects.  Rather than converting
+        # (fragile across versions), bypass the original function entirely when a
+        # DynamicCache is detected and return a minimal-but-correct model_inputs dict.
+        if past_key_values is not None and not isinstance(past_key_values, (list, tuple)):
+            # DynamicCache path: trim input_ids to last token when cache is populated.
+            cache_len = past_key_values.get_seq_length() if hasattr(past_key_values, "get_seq_length") else 0
+            if cache_len > 0:
+                input_ids = input_ids[:, -1:]
+            return {
+                "input_ids": input_ids,
+                "past_key_values": past_key_values,
+                "attention_mask": attention_mask,
+                "use_cache": kwargs.get("use_cache", True),
+            }
+        # Legacy tuple-of-tuples path: sanitise and delegate to original function.
+        if past_key_values is not None:
             if len(past_key_values) == 0 or past_key_values[0] is None or past_key_values[0][0] is None:
                 past_key_values = None
         return _orig_prepare(input_ids, past_key_values, attention_mask, inputs_embeds, **kwargs)
