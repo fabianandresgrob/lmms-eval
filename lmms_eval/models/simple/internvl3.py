@@ -79,20 +79,21 @@ def _patch_language_model_generate(model):
 
     lm.prepare_inputs_for_generation = _safe_prepare
 
-    # InternLM2's forward() also subscripts past_key_values as tuples.
-    # Patch forward to convert DynamicCache → tuple-of-tuples at entry.
-    _orig_lm_forward = lm.forward
-
-    @functools.wraps(_orig_lm_forward)
-    def _safe_lm_forward(*args, **kwargs):
+    # InternLM2's forward() subscripts past_key_values as tuples, but newer
+    # transformers passes DynamicCache.  Instance-level forward patches are
+    # ignored by Module.__call__, so use register_forward_pre_hook instead.
+    def _convert_cache_hook(_module, args, kwargs):
         pkv = kwargs.get("past_key_values")
         if pkv is not None and not isinstance(pkv, (list, tuple)):
             if hasattr(pkv, "key_cache") and hasattr(pkv, "value_cache"):
                 cache = tuple(zip(pkv.key_cache, pkv.value_cache))
                 kwargs["past_key_values"] = cache if cache else None
-        return _orig_lm_forward(*args, **kwargs)
+        return args, kwargs
 
-    lm.forward = _safe_lm_forward
+    # Hook both the outer LM and its inner model (both access past_key_values).
+    lm.register_forward_pre_hook(_convert_cache_hook, with_kwargs=True)
+    if hasattr(lm, "model"):
+        lm.model.register_forward_pre_hook(_convert_cache_hook, with_kwargs=True)
 
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
