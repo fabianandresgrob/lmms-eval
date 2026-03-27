@@ -42,13 +42,19 @@ try:
     from llava.conversation import SeparatorStyle, conv_templates
     from llava.mm_utils import (
         KeywordsStoppingCriteria,
-        get_model_name_from_path,
         process_images,
         tokenizer_image_token,
     )
     from llava.model.builder import load_pretrained_model
 except ImportError as e:
     eval_logger.debug(f"LLaVA is not installed. Please install LLaVA to use this model.\nError: {e}")
+
+try:
+    from llava.mm_utils import get_model_name_from_path
+except ImportError:
+
+    def get_model_name_from_path(model_path):
+        return model_path.rstrip("/").split("/")[-1]
 
 
 # Determine best attention implementation
