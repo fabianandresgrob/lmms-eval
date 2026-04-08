@@ -22,10 +22,32 @@ if [ -z "$SCRATCH" ]; then
     exit 1
 fi
 
-TASKS="${TASKS:-vlms_are_biased,vilp,vlind_bench}"
+# Honor externally provided TASKS from submission; fall back only if unset.
+REQUESTED_TASKS="${TASKS:-vlms_are_biased,vilp,vlind_bench}"
 BATCH_SIZE="${BATCH_SIZE:-1}"
 LMMS_EVAL_DIR="$HOME/projects/lmms-eval"
 RESULTS_DIR="$SCRATCH/results/lmms-eval"
+
+# Return success if ALL requested tasks already have at least one results file
+# for the given model directory.
+all_tasks_complete() {
+    local model_results_dir="$1"
+    local tasks_csv="$2"
+    local task
+
+    IFS=',' read -r -a task_list <<< "$tasks_csv"
+    for task in "${task_list[@]}"; do
+        # Trim surrounding whitespace
+        task="${task#${task%%[![:space:]]*}}"
+        task="${task%${task##*[![:space:]]}}"
+
+        if ! compgen -G "$model_results_dir/$task/*_results.json" > /dev/null 2>&1; then
+            return 1
+        fi
+    done
+
+    return 0
+}
 
 # Override lmms-eval's remote-fs detection — keep datasets cache on $SCRATCH,
 # not redirected to /tmp (which is small on compute nodes).
@@ -60,17 +82,18 @@ echo "$(date): Starting evaluation"
 echo "  Model type:  $MODEL_TYPE"
 echo "  Pretrained:  $PRETRAINED"
 echo "  Model name:  $MODEL_NAME"
-echo "  Tasks:       $TASKS"
+echo "  Tasks:       $REQUESTED_TASKS"
 echo "  Batch size:  $BATCH_SIZE"
 echo "  GPUs:        $NUM_GPUS"
 echo "  Results dir: $RESULTS_DIR/$MODEL_NAME"
 
 mkdir -p "$RESULTS_DIR" logs
 
-# Skip if results already exist (output is written only on successful completion)
-# Structure: $RESULTS_DIR/$MODEL_NAME/<model_name_sanitized>/<datetime>_results.json
-if compgen -G "$RESULTS_DIR/$MODEL_NAME"/*/*_results.json > /dev/null 2>&1; then
-    echo "$(date): Results already exist for $MODEL_NAME, skipping."
+# Skip only if all requested task results already exist (output is written only
+# on successful completion).
+# Structure: $RESULTS_DIR/$MODEL_NAME/<task>/<datetime>_results.json
+if all_tasks_complete "$RESULTS_DIR/$MODEL_NAME" "$REQUESTED_TASKS"; then
+    echo "$(date): Requested task results already exist for $MODEL_NAME ($REQUESTED_TASKS), skipping."
     exit 0
 fi
 
@@ -78,7 +101,7 @@ cd "$LMMS_EVAL_DIR"
 python -m lmms_eval \
     --model "$MODEL_TYPE" \
     --model_args "$MODEL_ARGS" \
-    --tasks "$TASKS" \
+    --tasks "$REQUESTED_TASKS" \
     --batch_size "$BATCH_SIZE" \
     --output_path "$RESULTS_DIR/$MODEL_NAME" \
     --log_samples \

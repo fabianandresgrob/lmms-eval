@@ -16,6 +16,8 @@ SLURM_SCRIPT="$SCRIPT_DIR/slurm_eval.sh"
 
 FAMILY_FILTER=""
 DRY_RUN=false
+# Resolved once here and forwarded explicitly to each sbatch job.
+TASKS="${TASKS:-vlms_are_biased,vilp,vlind_bench}"
 
 # Only schedule on nodes with >=80GB VRAM (A100 80GB or H100 80GB).
 # This avoids V100 32GB, A100 40GB, A100 MIG 20GB, and RTX 8000 48GB nodes.
@@ -84,6 +86,27 @@ get_resources() {
     fi
 }
 
+# Return success if ALL requested tasks already have at least one results file
+# for the given model directory.
+all_tasks_complete() {
+    local model_results_dir="$1"
+    local tasks_csv="$2"
+    local task
+
+    IFS=',' read -r -a task_list <<< "$tasks_csv"
+    for task in "${task_list[@]}"; do
+        # Trim surrounding whitespace
+        task="${task#${task%%[![:space:]]*}}"
+        task="${task%${task##*[![:space:]]}}"
+
+        if ! compgen -G "$model_results_dir/$task/*_results.json" > /dev/null 2>&1; then
+            return 1
+        fi
+    done
+
+    return 0
+}
+
 # ---- Submit jobs ----
 SUBMITTED=0
 SKIPPED=0
@@ -103,10 +126,10 @@ for pass in 1 4; do
             continue
         fi
 
-        # Skip if results already exist
+        # Skip only if all requested task results already exist
         RESULTS_DIR="$SCRATCH/results/lmms-eval"
-        if compgen -G "$RESULTS_DIR/$model_name"/*/*_results.json > /dev/null 2>&1; then
-            echo "Skipping: $model_name (results already exist)"
+        if all_tasks_complete "$RESULTS_DIR/$model_name" "$TASKS"; then
+            echo "Skipping: $model_name (all requested task results already exist: $TASKS)"
             SKIPPED=$((SKIPPED + 1))
             continue
         fi
@@ -114,7 +137,7 @@ for pass in 1 4; do
         RESOURCES=$(get_resources "$num_gpus" "$model_name")
         JOB_NAME="eval-${model_name}"
 
-        EXPORT_VARS="ALL,MODEL_TYPE=$model_type,PRETRAINED=$pretrained,MODEL_NAME=$model_name,BATCH_SIZE=$batch_size"
+        EXPORT_VARS="ALL,MODEL_TYPE=$model_type,PRETRAINED=$pretrained,MODEL_NAME=$model_name,BATCH_SIZE=$batch_size,TASKS=$TASKS"
         if [ -n "$conda_env" ]; then
             EXPORT_VARS="$EXPORT_VARS,CONDA_ENV=$conda_env"
         fi
