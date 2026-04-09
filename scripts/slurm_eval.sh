@@ -28,8 +28,13 @@ BATCH_SIZE="${BATCH_SIZE:-1}"
 LMMS_EVAL_DIR="$HOME/projects/lmms-eval"
 RESULTS_DIR="$SCRATCH/results/lmms-eval"
 
-# Return success if ALL requested tasks already have at least one results file
-# for the given model directory.
+# Return success if ALL requested tasks already have at least one task-specific
+# samples file for the given model directory.
+#
+# lmms-eval writes outputs as:
+#   $RESULTS_DIR/$MODEL_NAME/<hf_model_slug>/<timestamp>_results.json
+#   $RESULTS_DIR/$MODEL_NAME/<hf_model_slug>/<timestamp>_samples_<task>.jsonl
+# (i.e., no per-task subdirectory under $MODEL_NAME)
 all_tasks_complete() {
     local model_results_dir="$1"
     local tasks_csv="$2"
@@ -41,7 +46,7 @@ all_tasks_complete() {
         task="${task#${task%%[![:space:]]*}}"
         task="${task%${task##*[![:space:]]}}"
 
-        if ! compgen -G "$model_results_dir/$task/*_results.json" > /dev/null 2>&1; then
+        if ! compgen -G "$model_results_dir"/*/*_samples_"$task".jsonl > /dev/null 2>&1; then
             return 1
         fi
     done
@@ -89,11 +94,11 @@ echo "  Results dir: $RESULTS_DIR/$MODEL_NAME"
 
 mkdir -p "$RESULTS_DIR" logs
 
-# Skip only if all requested task results already exist (output is written only
+# Skip only if all requested task outputs already exist (output is written only
 # on successful completion).
-# Structure: $RESULTS_DIR/$MODEL_NAME/<task>/<datetime>_results.json
+# Structure: $RESULTS_DIR/$MODEL_NAME/<hf_model_slug>/<datetime>_samples_<task>.jsonl
 if all_tasks_complete "$RESULTS_DIR/$MODEL_NAME" "$REQUESTED_TASKS"; then
-    echo "$(date): Requested task results already exist for $MODEL_NAME ($REQUESTED_TASKS), skipping."
+    echo "$(date): Requested task outputs already exist for $MODEL_NAME ($REQUESTED_TASKS), skipping."
     exit 0
 fi
 
