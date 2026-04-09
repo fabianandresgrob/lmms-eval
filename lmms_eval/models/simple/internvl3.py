@@ -339,6 +339,13 @@ def split_model(model_name: str, num_layers: Optional[int] = None) -> dict:
             "InternVL3-14B": 40,
             "InternVL3-38B": 64,
             "InternVL3-78B": 80,
+            # InternVL3.5 — uses Qwen3 backbones, layer counts from HF configs
+            "InternVL3_5-1B": 28,
+            "InternVL3_5-2B": 28,
+            "InternVL3_5-4B": 36,
+            "InternVL3_5-8B": 36,
+            "InternVL3_5-14B": 40,
+            "InternVL3_5-38B": 64,
         }
         if model_name not in known:
             raise ValueError(f"split_model: unknown model '{model_name}'. Pass num_layers explicitly.")
