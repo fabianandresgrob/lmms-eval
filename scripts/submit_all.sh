@@ -36,6 +36,14 @@ done
 # with multiple tasks running in the same job.
 # conda_env is optional (defaults to "lmms-eval").
 MODELS=(
+    # InternVL3.5
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-1B|internvl3_5-1b|1|1"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-2B|internvl3_5-2b|1|1"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-4B|internvl3_5-4b|1|1"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-8B|internvl3_5-8b|1|1"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-14B|internvl3_5-14b|1|1"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-38B|internvl3_5-38b|4|1"
+
     # InternVL3 (batch_size=1 enforced by model)
     "internvl3|internvl3|OpenGVLab/InternVL3-1B|internvl3-1b|1|1"
     "internvl3|internvl3|OpenGVLab/InternVL3-2B|internvl3-2b|1|1"
