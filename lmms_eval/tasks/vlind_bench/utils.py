@@ -129,6 +129,7 @@ def vlind_bench_process_results(
         "s_vp": result_info,
         "s_cb": result_info,
         "s_lp": result_info,
+        "accuracy_cb": result_info,
         "accuracy_lp": result_info,
     }
 
@@ -209,6 +210,14 @@ def aggregate_s_lp(results: list[dict[str, Any]]) -> float:
             if img_passes:
                 instance_scores.append(sum(img_passes) / len(img_passes))
     return sum(instance_scores) / len(instance_scores) if instance_scores else 0.0
+
+
+def aggregate_accuracy_cb(results: list[dict[str, Any]]) -> float:
+    """Raw CB item-level accuracy, no pipeline filtering."""
+    cb_items = [r for r in results if r["stage"] == "cb"]
+    if not cb_items:
+        return 0.0
+    return sum(r["correct"] for r in cb_items) / len(cb_items)
 
 
 def aggregate_accuracy_lp(results: list[dict[str, Any]]) -> float:
