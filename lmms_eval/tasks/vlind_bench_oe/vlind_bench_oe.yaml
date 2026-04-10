@@ -1,0 +1,33 @@
+task: "vlind_bench_oe"
+dataset_path: fabiangrob/vlind-bench-oe
+test_split: train
+output_type: generate_until
+
+doc_to_visual: !function utils.vlind_bench_oe_doc_to_visual
+doc_to_text: !function utils.vlind_bench_oe_doc_to_text
+doc_to_target: !function utils.vlind_bench_oe_doc_to_target
+
+process_results: !function utils.vlind_bench_oe_process_results
+
+generation_kwargs:
+  max_new_tokens: 32
+  temperature: 0
+  top_p: 1.0
+  num_beams: 1
+  do_sample: false
+
+metric_list:
+  - metric: accuracy
+    aggregation: !function utils.aggregate_accuracy
+    higher_is_better: true
+  - metric: bias_rate
+    aggregation: !function utils.aggregate_bias_rate
+    higher_is_better: false
+  - metric: other_rate
+    aggregation: !function utils.aggregate_other_rate
+    higher_is_better: false
+
+metadata:
+  version: 1.0
+  description: "VLind-Bench OE: open-ended language-prior benchmark derived from VLind-Bench"
+  original_dataset: "fabiangrob/vlind-bench-oe"
