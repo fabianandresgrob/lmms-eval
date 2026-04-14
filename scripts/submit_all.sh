@@ -6,6 +6,7 @@
 #   ./scripts/submit_all.sh              # submit all models
 #   ./scripts/submit_all.sh internvl3    # submit only InternVL3 family
 #   ./scripts/submit_all.sh --dry-run    # print commands without submitting
+#   ./scripts/submit_all.sh --tasks vilp_without_fact,vilp,vlms_are_biased,vlind_bench
 #
 # Each job evaluates one model checkpoint on all benchmarks (vlms_are_biased, vilp, vlind_bench).
 
@@ -17,16 +18,35 @@ SLURM_SCRIPT="$SCRIPT_DIR/slurm_eval.sh"
 FAMILY_FILTER=""
 DRY_RUN=false
 # Resolved once here and forwarded explicitly to each sbatch job.
-TASKS="${TASKS:-vilp_without_fact}"
+# Intentionally ignore externally exported TASKS to avoid accidental overrides.
+TASKS="vilp_without_fact,vilp,vlms_are_biased,vlind_bench"
 
 # Only schedule on nodes with >=80GB VRAM (A100 80GB or H100 80GB).
 # This avoids V100 32GB, A100 40GB, A100 MIG 20GB, and RTX 8000 48GB nodes.
 GPU_CONSTRAINT="a100_80gb|h100_80gb"
 
-for arg in "$@"; do
-    case "$arg" in
-        --dry-run) DRY_RUN=true ;;
-        *) FAMILY_FILTER="$arg" ;;
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        --tasks)
+            if [ $# -lt 2 ]; then
+                echo "ERROR: --tasks requires a comma-separated value"
+                exit 1
+            fi
+            TASKS="$2"
+            shift 2
+            ;;
+        --tasks=*)
+            TASKS="${1#--tasks=}"
+            shift
+            ;;
+        *)
+            FAMILY_FILTER="$1"
+            shift
+            ;;
     esac
 done
 
@@ -79,20 +99,6 @@ MODELS=(
     "llava15|llava|liuhaotian/llava-v1.5-7b|llava15-7b|1|1"
     "llava15|llava|liuhaotian/llava-v1.5-13b|llava15-13b|1|1"
 )
-
-# ---- Resource tiers ----
-get_resources() {
-    local num_gpus=$1
-    local model_name=$2
-
-    if [ "$num_gpus" -eq 1 ]; then
-        # Small models: tight resource requests for fast backfill
-        echo "--gres=gpu:1 --cpus-per-task=8 --mem=80G --time=03:00:00 --constraint=\"$GPU_CONSTRAINT\""
-    else
-        # Large models: 4 GPUs
-        echo "--gres=gpu:4 --cpus-per-task=32 --mem=320G --time=08:00:00 --constraint=\"$GPU_CONSTRAINT\""
-    fi
-}
 
 # Return success if ALL requested tasks already have at least one task-specific
 # samples file for the given model directory.
@@ -147,23 +153,44 @@ for pass in 1 4; do
             continue
         fi
 
-        RESOURCES=$(get_resources "$num_gpus" "$model_name")
+        if [ "$num_gpus" -eq 1 ]; then
+            # Small models: tight resource requests for fast backfill
+            RESOURCES=(
+                --gres=gpu:1
+                --cpus-per-task=8
+                --mem=80G
+                --time=03:00:00
+                "--constraint=$GPU_CONSTRAINT"
+            )
+        else
+            # Large models: 4 GPUs
+            RESOURCES=(
+                --gres=gpu:4
+                --cpus-per-task=32
+                --mem=320G
+                --time=08:00:00
+                "--constraint=$GPU_CONSTRAINT"
+            )
+        fi
+
         JOB_NAME="eval-${model_name}"
 
-        EXPORT_VARS="ALL,MODEL_TYPE=$model_type,PRETRAINED=$pretrained,MODEL_NAME=$model_name,BATCH_SIZE=$batch_size,TASKS=$TASKS"
+        # NOTE: sbatch --export is comma-delimited. If TASKS contains commas,
+        # it gets truncated at the first task. Encode commas as ';' here and
+        # decode back in slurm_eval.sh.
+        TASKS_FOR_EXPORT="${TASKS//,/;}"
+        EXPORT_VARS="ALL,MODEL_TYPE=$model_type,PRETRAINED=$pretrained,MODEL_NAME=$model_name,BATCH_SIZE=$batch_size,TASKS=$TASKS_FOR_EXPORT"
         if [ -n "$conda_env" ]; then
             EXPORT_VARS="$EXPORT_VARS,CONDA_ENV=$conda_env"
         fi
 
-        CMD="sbatch --job-name=$JOB_NAME $RESOURCES \
-            --export=$EXPORT_VARS \
-            $SLURM_SCRIPT"
-
         if [ "$DRY_RUN" = true ]; then
-            echo "[DRY RUN] $CMD"
+            printf "[DRY RUN] sbatch --job-name=%q " "$JOB_NAME"
+            printf "%q " "${RESOURCES[@]}"
+            printf -- "--export=%q %q\n" "$EXPORT_VARS" "$SLURM_SCRIPT"
         else
             echo "Submitting: $JOB_NAME ($num_gpus GPU)"
-            eval "$CMD"
+            sbatch --job-name="$JOB_NAME" "${RESOURCES[@]}" --export="$EXPORT_VARS" "$SLURM_SCRIPT"
         fi
         SUBMITTED=$((SUBMITTED + 1))
     done

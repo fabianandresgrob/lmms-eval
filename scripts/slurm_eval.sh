@@ -23,7 +23,9 @@ if [ -z "$SCRATCH" ]; then
 fi
 
 # Honor externally provided TASKS from submission; fall back only if unset.
-REQUESTED_TASKS="${TASKS:-vlms_are_biased,vilp,vlind_bench}"
+# submit_all.sh encodes commas as ';' because sbatch --export is comma-delimited.
+REQUESTED_TASKS_RAW="${TASKS:-vlms_are_biased,vilp,vlind_bench}"
+REQUESTED_TASKS="${REQUESTED_TASKS_RAW//;/,}"
 BATCH_SIZE="${BATCH_SIZE:-1}"
 LMMS_EVAL_DIR="$HOME/projects/lmms-eval"
 RESULTS_DIR="$SCRATCH/results/lmms-eval"
@@ -52,6 +54,41 @@ all_tasks_complete() {
     done
 
     return 0
+}
+
+task_has_output() {
+    local model_results_dir="$1"
+    local task="$2"
+
+    compgen -G "$model_results_dir"/*/*_samples_"$task".jsonl > /dev/null 2>&1
+}
+
+pending_tasks_csv() {
+    local model_results_dir="$1"
+    local tasks_csv="$2"
+    local task
+    local pending=""
+
+    IFS=',' read -r -a task_list <<< "$tasks_csv"
+    for task in "${task_list[@]}"; do
+        # Trim surrounding whitespace
+        task="${task#${task%%[![:space:]]*}}"
+        task="${task%${task##*[![:space:]]}}"
+
+        if [ -z "$task" ]; then
+            continue
+        fi
+
+        if ! task_has_output "$model_results_dir" "$task"; then
+            if [ -z "$pending" ]; then
+                pending="$task"
+            else
+                pending="$pending,$task"
+            fi
+        fi
+    done
+
+    echo "$pending"
 }
 
 # Override lmms-eval's remote-fs detection — keep datasets cache on $SCRATCH,
@@ -94,19 +131,22 @@ echo "  Results dir: $RESULTS_DIR/$MODEL_NAME"
 
 mkdir -p "$RESULTS_DIR" logs
 
-# Skip only if all requested task outputs already exist (output is written only
-# on successful completion).
-# Structure: $RESULTS_DIR/$MODEL_NAME/<hf_model_slug>/<datetime>_samples_<task>.jsonl
-if all_tasks_complete "$RESULTS_DIR/$MODEL_NAME" "$REQUESTED_TASKS"; then
+# Run only tasks that are still missing outputs.
+PENDING_TASKS="$(pending_tasks_csv "$RESULTS_DIR/$MODEL_NAME" "$REQUESTED_TASKS")"
+if [ -z "$PENDING_TASKS" ]; then
     echo "$(date): Requested task outputs already exist for $MODEL_NAME ($REQUESTED_TASKS), skipping."
     exit 0
+fi
+
+if [ "$PENDING_TASKS" != "$REQUESTED_TASKS" ]; then
+    echo "$(date): Some task outputs already exist; running only missing tasks: $PENDING_TASKS"
 fi
 
 cd "$LMMS_EVAL_DIR"
 python -m lmms_eval \
     --model "$MODEL_TYPE" \
     --model_args "$MODEL_ARGS" \
-    --tasks "$REQUESTED_TASKS" \
+    --tasks "$PENDING_TASKS" \
     --batch_size "$BATCH_SIZE" \
     --output_path "$RESULTS_DIR/$MODEL_NAME" \
     --log_samples \
