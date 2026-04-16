@@ -3,12 +3,25 @@
 # Submit lmms-eval SLURM jobs for all model checkpoints.
 #
 # Usage:
-#   ./scripts/submit_all.sh              # submit all models
-#   ./scripts/submit_all.sh internvl3    # submit only InternVL3 family
-#   ./scripts/submit_all.sh --dry-run    # print commands without submitting
-#   ./scripts/submit_all.sh --tasks vilp_without_fact,vilp,vlms_are_biased,vlind_bench
+#   ./scripts/submit_all.sh                           # all models, all tasks, mcml partitions
+#   ./scripts/submit_all.sh internvl3                 # filter to InternVL3 family
+#   ./scripts/submit_all.sh --dry-run                 # print sbatch commands without submitting
+#   ./scripts/submit_all.sh --tasks vlind_bench_oe    # single benchmark
+#   ./scripts/submit_all.sh --tasks vlind_bench_oe --time 0:30:00 --time-large 1:30:00
 #
-# Each job evaluates one model checkpoint on all benchmarks (vlms_are_biased, vilp, vlind_bench).
+# To maximise scheduling throughput on a busy cluster, run submit_all.sh three times
+# targeting different partition pools. The pending_tasks_csv guard in slurm_eval.sh
+# ensures that whichever job starts first does the work; the others exit immediately.
+#
+#   # Wave 1: mcml A100/H100
+#   ./scripts/submit_all.sh --tasks vlind_bench_oe --time 0:30:00 --time-large 1:30:00
+#
+#   # Wave 2: LRZ A100/H100 (qos=gpu required for lrz partitions)
+#   ./scripts/submit_all.sh --tasks vlind_bench_oe --time 0:30:00 --time-large 1:30:00 \
+#     --partition lrz-hgx-h100-94x4,lrz-hgx-a100-80x4,lrz-dgx-a100-80x8 --qos gpu
+#
+#   # Wave 3: A100 MIG slices (40 GB, 1-GPU models only, qos=mig)
+#   ./scripts/submit_all.sh --tasks vlind_bench_oe --time 0:30:00 --mig
 
 set -e
 
@@ -17,14 +30,35 @@ SLURM_SCRIPT="$SCRIPT_DIR/slurm_eval.sh"
 
 FAMILY_FILTER=""
 DRY_RUN=false
+MIG_MODE=false
 # Resolved once here and forwarded explicitly to each sbatch job.
 # Intentionally ignore externally exported TASKS to avoid accidental overrides.
-TASKS="vilp_without_fact,vilp,vlms_are_biased,vlind_bench"
+TASKS="vilp_without_fact,vilp,vlms_are_biased,vlind_bench,vlind_bench_oe"
+# Time limits: tune these down when running only fast benchmarks (e.g. vlind_bench_oe)
+# to improve backfill scheduling on busy clusters.
+#   Full 5-task suite:  TIME_SMALL=2:00:00  TIME_LARGE=6:00:00
+#   vlind_bench_oe only: TIME_SMALL=0:30:00  TIME_LARGE=1:30:00
+TIME_SMALL="2:00:00"
+TIME_LARGE="6:00:00"
+# Partition and QOS.
+#   mcml partitions require --qos=mcml
+#   lrz partitions require  --qos=gpu
+#   mig partitions require  --qos=mig   (set automatically by --mig)
+PARTITION="mcml-hgx-a100-80x4,mcml-hgx-h100-94x4"
+QOS="mcml"
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --dry-run)
             DRY_RUN=true
+            shift
+            ;;
+        --mig)
+            # MIG mode: target the mcml 40 GB A100 MIG partition.
+            # Uses gpu:3g.40gb:1 GRES; skips 4-GPU models (too large for a single slice).
+            MIG_MODE=true
+            PARTITION="mcml-hgx-a100-80x4-mig"
+            QOS="mig"
             shift
             ;;
         --tasks)
@@ -37,6 +71,54 @@ while [ $# -gt 0 ]; do
             ;;
         --tasks=*)
             TASKS="${1#--tasks=}"
+            shift
+            ;;
+        --time)
+            if [ $# -lt 2 ]; then
+                echo "ERROR: --time requires a value (e.g. 0:30:00)"
+                exit 1
+            fi
+            TIME_SMALL="$2"
+            shift 2
+            ;;
+        --time=*)
+            TIME_SMALL="${1#--time=}"
+            shift
+            ;;
+        --time-large)
+            if [ $# -lt 2 ]; then
+                echo "ERROR: --time-large requires a value (e.g. 1:30:00)"
+                exit 1
+            fi
+            TIME_LARGE="$2"
+            shift 2
+            ;;
+        --time-large=*)
+            TIME_LARGE="${1#--time-large=}"
+            shift
+            ;;
+        --partition)
+            if [ $# -lt 2 ]; then
+                echo "ERROR: --partition requires a value"
+                exit 1
+            fi
+            PARTITION="$2"
+            shift 2
+            ;;
+        --partition=*)
+            PARTITION="${1#--partition=}"
+            shift
+            ;;
+        --qos)
+            if [ $# -lt 2 ]; then
+                echo "ERROR: --qos requires a value"
+                exit 1
+            fi
+            QOS="$2"
+            shift 2
+            ;;
+        --qos=*)
+            QOS="${1#--qos=}"
             shift
             ;;
         *)
@@ -126,8 +208,15 @@ all_tasks_complete() {
 SUBMITTED=0
 SKIPPED=0
 
+# In MIG mode only 1-GPU models fit in a single 40 GB slice; skip the 4-GPU pass.
+GPU_PASSES=(1 4)
+if [ "$MIG_MODE" = true ]; then
+    GPU_PASSES=(1)
+    echo "MIG mode: submitting 1-GPU models only (gres=gpu:3g.40gb:1, partition=$PARTITION, qos=$QOS)"
+fi
+
 # Submit 1-GPU jobs first (faster backfill), then multi-GPU
-for pass in 1 4; do
+for pass in "${GPU_PASSES[@]}"; do
     for entry in "${MODELS[@]}"; do
         IFS='|' read -r family model_type pretrained model_name num_gpus batch_size conda_env <<< "$entry"
 
@@ -150,20 +239,36 @@ for pass in 1 4; do
         fi
 
         if [ "$num_gpus" -eq 1 ]; then
-            # Small models: tight resource requests for fast backfill
-            RESOURCES=(
-                --gres=gpu:1
-                --cpus-per-task=8
-                --mem=80G
-                --time=03:00:00
-            )
+            if [ "$MIG_MODE" = true ]; then
+                # MIG slice: 40 GB A100 partition, specific GRES type required
+                RESOURCES=(
+                    --gres=gpu:3g.40gb:1
+                    --cpus-per-task=8
+                    --mem=80G
+                    --time="$TIME_SMALL"
+                    --partition="$PARTITION"
+                    --qos="$QOS"
+                )
+            else
+                # Small models: tight resource requests for fast backfill
+                RESOURCES=(
+                    --gres=gpu:1
+                    --cpus-per-task=8
+                    --mem=80G
+                    --time="$TIME_SMALL"
+                    --partition="$PARTITION"
+                    --qos="$QOS"
+                )
+            fi
         else
             # Large models: 4 GPUs
             RESOURCES=(
                 --gres=gpu:4
                 --cpus-per-task=32
                 --mem=320G
-                --time=08:00:00
+                --time="$TIME_LARGE"
+                --partition="$PARTITION"
+                --qos="$QOS"
             )
         fi
 

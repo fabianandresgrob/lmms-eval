@@ -2,10 +2,10 @@
 #SBATCH --job-name=lmms-eval
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
+# partition, qos, GPU, CPU, mem, and time are all set dynamically by submit_all.sh.
+# Defaults below are only used when running slurm_eval.sh directly without submit_all.sh.
 #SBATCH --partition=mcml-hgx-a100-80x4,mcml-hgx-h100-94x4
 #SBATCH --qos=mcml
-#
-# GPU, CPU, mem, and time are set dynamically by submit_all.sh via --gres, --cpus-per-task, --mem, --time flags.
 
 set -e
 
@@ -24,7 +24,7 @@ fi
 
 # Honor externally provided TASKS from submission; fall back only if unset.
 # submit_all.sh encodes commas as ';' because sbatch --export is comma-delimited.
-REQUESTED_TASKS_RAW="${TASKS:-vlms_are_biased,vilp,vlind_bench}"
+REQUESTED_TASKS_RAW="${TASKS:-vlms_are_biased,vilp,vlind_bench,vlind_bench_oe}"
 REQUESTED_TASKS="${REQUESTED_TASKS_RAW//;/,}"
 BATCH_SIZE="${BATCH_SIZE:-1}"
 LMMS_EVAL_DIR="$HOME/projects/lmms-eval"
@@ -96,8 +96,23 @@ pending_tasks_csv() {
 export LMMS_EVAL_DATASETS_CACHE="$SCRATCH/.cache/huggingface/datasets"
 
 # ---- Activate environment ----
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate "${CONDA_ENV:-lmms-eval}"
+UV_VENV_DIR="$LMMS_EVAL_DIR/.venv"
+if [ -f "$UV_VENV_DIR/bin/activate" ]; then
+    echo "$(date): Activating uv/venv environment at $UV_VENV_DIR"
+    # shellcheck disable=SC1090
+    source "$UV_VENV_DIR/bin/activate"
+elif [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ] || command -v conda > /dev/null 2>&1; then
+    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+        source "$HOME/miniconda3/etc/profile.d/conda.sh"
+    else
+        eval "$(conda shell.bash hook)"
+    fi
+    echo "$(date): Activating conda environment ${CONDA_ENV:-lmms-eval}"
+    conda activate "${CONDA_ENV:-lmms-eval}"
+else
+    echo "ERROR: No uv/venv found at $UV_VENV_DIR and conda is not available."
+    exit 1
+fi
 
 # ---- CUDA setup ----
 TORCH_CUDA_VER=$(python -c "import torch; print(torch.version.cuda)")
