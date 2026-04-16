@@ -144,7 +144,19 @@ echo "  Batch size:  $BATCH_SIZE"
 echo "  GPUs:        $NUM_GPUS"
 echo "  Results dir: $RESULTS_DIR/$MODEL_NAME"
 
-mkdir -p "$RESULTS_DIR" logs
+mkdir -p "$RESULTS_DIR/$MODEL_NAME" logs
+
+# ---- Acquire per-model lock ----
+# Prevents two jobs (submitted to different partition pools) from running the
+# same model simultaneously. mkdir is atomic on shared filesystems; the second
+# job to arrive will find the directory already exists and exit cleanly.
+LOCK_DIR="$RESULTS_DIR/$MODEL_NAME/.lock"
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    echo "$(date): Lock already held for $MODEL_NAME — another job is running. Exiting."
+    exit 0
+fi
+# Release lock on exit (success, error, or SLURM timeout signal).
+trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT
 
 # Run only tasks that are still missing outputs.
 PENDING_TASKS="$(pending_tasks_csv "$RESULTS_DIR/$MODEL_NAME" "$REQUESTED_TASKS")"
