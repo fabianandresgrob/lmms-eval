@@ -114,9 +114,9 @@ def vlind_bench_oe_process_results(
         "instance_id":      doc["instance_id"],
         "cf_img_idx":       doc["cf_img_idx"],
         "concept":          doc.get("concept", ""),
-        "score":            score,
-        "correct":          score == "correct",
-        "biased":           score == "biased",
+        "outcome":          score,
+        "correct":          int(score == "correct"),
+        "biased":           int(score == "biased"),
         "response":         response,
         "expected_answers": doc.get("expected_answers", []),
         "biased_answers":   doc.get("biased_answers", []),
@@ -151,4 +151,4 @@ def aggregate_other_rate(results: list[dict[str, Any]]) -> float:
     """Fraction of samples scored as 'other' (neither correct nor biased)."""
     if not results:
         return 0.0
-    return sum(r["score"] == "other" for r in results) / len(results)
+    return sum(r["outcome"] == "other" for r in results) / len(results)

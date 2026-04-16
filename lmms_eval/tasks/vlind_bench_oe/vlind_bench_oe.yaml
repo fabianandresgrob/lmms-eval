@@ -27,6 +27,8 @@ metric_list:
     aggregation: !function utils.aggregate_other_rate
     higher_is_better: false
 
+score_key: correct
+
 metadata:
   version: 1.0
   description: "VLind-Bench OE: open-ended language-prior benchmark derived from VLind-Bench"
