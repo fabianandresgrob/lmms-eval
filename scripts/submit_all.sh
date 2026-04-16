@@ -21,10 +21,6 @@ DRY_RUN=false
 # Intentionally ignore externally exported TASKS to avoid accidental overrides.
 TASKS="vilp_without_fact,vilp,vlms_are_biased,vlind_bench"
 
-# Only schedule on nodes with >=80GB VRAM (A100 80GB or H100 80GB).
-# This avoids V100 32GB, A100 40GB, A100 MIG 20GB, and RTX 8000 48GB nodes.
-GPU_CONSTRAINT="a100_80gb|h100_80gb"
-
 while [ $# -gt 0 ]; do
     case "$1" in
         --dry-run)
@@ -160,7 +156,6 @@ for pass in 1 4; do
                 --cpus-per-task=8
                 --mem=80G
                 --time=03:00:00
-                "--constraint=$GPU_CONSTRAINT"
             )
         else
             # Large models: 4 GPUs
@@ -169,7 +164,6 @@ for pass in 1 4; do
                 --cpus-per-task=32
                 --mem=320G
                 --time=08:00:00
-                "--constraint=$GPU_CONSTRAINT"
             )
         fi
 

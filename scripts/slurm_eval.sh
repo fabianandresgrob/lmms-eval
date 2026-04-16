@@ -2,8 +2,8 @@
 #SBATCH --job-name=lmms-eval
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
-#SBATCH --partition=gpu_p
-#SBATCH --qos=gpu_normal
+#SBATCH --partition=mcml-hgx-a100-80x4,mcml-hgx-h100-94x4
+#SBATCH --qos=mcml
 #
 # GPU, CPU, mem, and time are set dynamically by submit_all.sh via --gres, --cpus-per-task, --mem, --time flags.
 
