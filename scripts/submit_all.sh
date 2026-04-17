@@ -7,6 +7,9 @@
 #   - 1-GPU models: batched 4-per-node, run in parallel via srun
 #   - 4-GPU models: 1 model per node, device_map=auto
 #
+# Multiple Python envs are supported via the 7th field in MODELS.
+# Only models sharing the same env are batched together on one node.
+#
 # Usage:
 #   ./scripts/submit_all.sh                           # all models, all tasks
 #   ./scripts/submit_all.sh internvl3                 # filter to InternVL3 family
@@ -19,6 +22,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SLURM_SCRIPT="$SCRIPT_DIR/slurm_eval.sh"
 
+# Root of all project repos on JUWELS — adjust if your layout differs.
+REPOS_DIR="${PROJECT}/grob1"
+
 FAMILY_FILTER=""
 DRY_RUN=false
 TASKS="vilp_without_fact,vilp,vlms_are_biased,vlind_bench,vlind_bench_oe"
@@ -30,6 +36,11 @@ TIME_LARGE="6:00:00"
 ACCOUNT="taco-vlm"
 PARTITION="gpus"
 RESULTS_DIR="$SCRATCH/grob1/results/lmms-eval"
+
+# Env activate.sh paths — keep these in one place.
+ENV_MAIN="${REPOS_DIR}/lmms-eval/sc_venv_template/activate.sh"
+ENV_LLAVA="${REPOS_DIR}/lmms-eval/sc_venv_template-llava/activate.sh"
+ENV_SAE_LLAVA="${REPOS_DIR}/LLaVA/sc_venv_template/activate.sh"
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -45,51 +56,57 @@ while [ $# -gt 0 ]; do
 done
 
 # ---- Model definitions ----
-# Format: family|model_type|pretrained_id|model_name|num_gpus|batch_size
-# num_gpus=1: batched 4-per-node; num_gpus=4: 1-per-node with device_map=auto
+# Format: family|model_type|pretrained_id|model_name|num_gpus|batch_size|activate_script
+# activate_script: path to sc_venv_template/activate.sh for this model's env.
+#   Leave empty to use the default main env (ENV_MAIN).
+#   Only models with the same activate_script are batched onto the same node.
 MODELS=(
     # InternVL3.5
-    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-1B|internvl3_5-1b|1|1"
-    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-2B|internvl3_5-2b|1|1"
-    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-4B|internvl3_5-4b|1|1"
-    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-8B|internvl3_5-8b|1|1"
-    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-14B|internvl3_5-14b|1|1"
-    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-38B|internvl3_5-38b|4|1"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-1B|internvl3_5-1b|1|1|"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-2B|internvl3_5-2b|1|1|"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-4B|internvl3_5-4b|1|1|"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-8B|internvl3_5-8b|1|1|"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-14B|internvl3_5-14b|1|1|"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-38B|internvl3_5-38b|4|1|"
 
     # InternVL3
-    "internvl3|internvl3|OpenGVLab/InternVL3-1B|internvl3-1b|1|1"
-    "internvl3|internvl3|OpenGVLab/InternVL3-2B|internvl3-2b|1|1"
-    "internvl3|internvl3|OpenGVLab/InternVL3-9B|internvl3-9b|1|1"
-    "internvl3|internvl3|OpenGVLab/InternVL3-8B|internvl3-8b|1|1"
-    "internvl3|internvl3|OpenGVLab/InternVL3-14B|internvl3-14b|1|1"
-    "internvl3|internvl3|OpenGVLab/InternVL3-38B|internvl3-38b|4|1"
-    "internvl3|internvl3|OpenGVLab/InternVL3-78B|internvl3-78b|4|1"
+    "internvl3|internvl3|OpenGVLab/InternVL3-1B|internvl3-1b|1|1|"
+    "internvl3|internvl3|OpenGVLab/InternVL3-2B|internvl3-2b|1|1|"
+    "internvl3|internvl3|OpenGVLab/InternVL3-9B|internvl3-9b|1|1|"
+    "internvl3|internvl3|OpenGVLab/InternVL3-8B|internvl3-8b|1|1|"
+    "internvl3|internvl3|OpenGVLab/InternVL3-14B|internvl3-14b|1|1|"
+    "internvl3|internvl3|OpenGVLab/InternVL3-38B|internvl3-38b|4|1|"
+    "internvl3|internvl3|OpenGVLab/InternVL3-78B|internvl3-78b|4|1|"
 
     # Qwen2.5-VL
-    "qwen25vl|qwen2_5_vl|Qwen/Qwen2.5-VL-3B-Instruct|qwen25vl-3b|1|1"
-    "qwen25vl|qwen2_5_vl|Qwen/Qwen2.5-VL-7B-Instruct|qwen25vl-7b|1|1"
-    "qwen25vl|qwen2_5_vl|Qwen/Qwen2.5-VL-32B-Instruct|qwen25vl-32b|4|1"
-    "qwen25vl|qwen2_5_vl|Qwen/Qwen2.5-VL-72B-Instruct|qwen25vl-72b|4|1"
+    "qwen25vl|qwen2_5_vl|Qwen/Qwen2.5-VL-3B-Instruct|qwen25vl-3b|1|1|"
+    "qwen25vl|qwen2_5_vl|Qwen/Qwen2.5-VL-7B-Instruct|qwen25vl-7b|1|1|"
+    "qwen25vl|qwen2_5_vl|Qwen/Qwen2.5-VL-32B-Instruct|qwen25vl-32b|4|1|"
+    "qwen25vl|qwen2_5_vl|Qwen/Qwen2.5-VL-72B-Instruct|qwen25vl-72b|4|1|"
 
     # Qwen3-VL
-    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-2B-Instruct|qwen3vl-2b|1|1"
-    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-4B-Instruct|qwen3vl-4b|1|1"
-    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-8B-Instruct|qwen3vl-8b|1|1"
-    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-32B-Instruct|qwen3vl-32b|4|1"
+    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-2B-Instruct|qwen3vl-2b|1|1|"
+    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-4B-Instruct|qwen3vl-4b|1|1|"
+    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-8B-Instruct|qwen3vl-8b|1|1|"
+    "qwen3vl|qwen3_vl|Qwen/Qwen3-VL-32B-Instruct|qwen3vl-32b|4|1|"
 
-    # LLaVA-OneVision
-    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-0.5b-ov|llava-ov-0.5b|1|1"
-    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-7b-ov|llava-ov-7b|1|1"
-    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-72b-ov|llava-ov-72b|4|1"
+    # LLaVA-OneVision — needs ENV_LLAVA (LLaVA-NeXT + older transformers)
+    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-0.5b-ov|llava-ov-0.5b|1|1|${ENV_LLAVA}"
+    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-7b-ov|llava-ov-7b|1|1|${ENV_LLAVA}"
+    "llava_ov|llava_onevision|lmms-lab/llava-onevision-qwen2-72b-ov|llava-ov-72b|4|1|${ENV_LLAVA}"
 
     # Gemma-3
-    "gemma3|gemma3|google/gemma-3-4b-it|gemma3-4b|1|1"
-    "gemma3|gemma3|google/gemma-3-12b-it|gemma3-12b|1|1"
-    "gemma3|gemma3|google/gemma-3-27b-it|gemma3-27b|4|1"
+    "gemma3|gemma3|google/gemma-3-4b-it|gemma3-4b|1|1|"
+    "gemma3|gemma3|google/gemma-3-12b-it|gemma3-12b|1|1|"
+    "gemma3|gemma3|google/gemma-3-27b-it|gemma3-27b|4|1|"
 
-    # LLaVA 1.5
-    "llava15|llava|liuhaotian/llava-v1.5-7b|llava15-7b|1|1"
-    "llava15|llava|liuhaotian/llava-v1.5-13b|llava15-13b|1|1"
+    # LLaVA 1.5 — needs ENV_LLAVA (original llava package + transformers==4.37.2)
+    "llava15|llava|liuhaotian/llava-v1.5-7b|llava15-7b|1|1|${ENV_LLAVA}"
+    "llava15|llava|liuhaotian/llava-v1.5-13b|llava15-13b|1|1|${ENV_LLAVA}"
+
+    # SAE-finetuned LLaVA — needs ENV_SAE_LLAVA (SAE-modified llava package)
+    # Add your checkpoint paths here, e.g.:
+    # "sae_llava|llava|$SCRATCH/grob1/checkpoints/sae-llava-7b|sae-llava-7b|1|1|${ENV_SAE_LLAVA}"
 )
 
 task_has_output() {
@@ -109,23 +126,25 @@ all_tasks_complete() {
 }
 
 # Submits a batch of 1–4 model entries as one node job.
-# Each entry occupies one GPU slot via srun in slurm_eval.sh.
-# Uses bash nameref (requires bash 4.3+).
+# $1: nameref to array of model entries (bash 4.3+)
+# $2: time limit
+# $3: num_gpus per model
+# $4: activate_script path (empty = default main env)
 submit_batch() {
     local -n _entries="$1"
-    local time="$2" num_gpus="$3"
+    local time="$2" num_gpus="$3" activate_script="$4"
 
     [ ${#_entries[@]} -eq 0 ] && return
 
-    IFS='|' read -r _ _ _ first_name _ _ <<< "${_entries[0]}"
+    IFS='|' read -r _ _ _ first_name _ _ _ <<< "${_entries[0]}"
     local job_name="eval-${first_name}"
     [ ${#_entries[@]} -gt 1 ] && job_name="${job_name}+$((${#_entries[@]}-1))"
 
-    # sbatch --export is comma-delimited; pass each model's vars separately.
     local export_vars="ALL,TASKS=${TASKS_FOR_EXPORT},NUM_GPUS=${num_gpus}"
+    [ -n "$activate_script" ] && export_vars="${export_vars},ACTIVATE_SCRIPT=${activate_script}"
     for i in "${!_entries[@]}"; do
         local n=$((i+1))
-        IFS='|' read -r _ model_type pretrained model_name _ batch_size <<< "${_entries[$i]}"
+        IFS='|' read -r _ model_type pretrained model_name _ batch_size _ <<< "${_entries[$i]}"
         export_vars="${export_vars},MODEL_TYPE_${n}=${model_type}"
         export_vars="${export_vars},PRETRAINED_${n}=${pretrained}"
         export_vars="${export_vars},MODEL_NAME_${n}=${model_name}"
@@ -134,9 +153,10 @@ submit_batch() {
 
     if [ "$DRY_RUN" = true ]; then
         echo "[DRY RUN] sbatch --account=$ACCOUNT --nodes=1 --partition=$PARTITION --gres=gpu:4 --time=$time --job-name=$job_name $SLURM_SCRIPT"
+        echo "          ACTIVATE_SCRIPT=${activate_script:-<default>}"
         echo "          export: $export_vars"
     else
-        echo "Submitting: $job_name (${#_entries[@]} model(s), ${num_gpus}-GPU each)"
+        echo "Submitting: $job_name (${#_entries[@]} model(s), ${num_gpus}-GPU each, env=${activate_script:-default})"
         sbatch \
             --account="$ACCOUNT" \
             --nodes=1 \
@@ -153,35 +173,51 @@ TASKS_FOR_EXPORT="${TASKS//,/;}"
 SUBMITTED_NODES=0
 SKIPPED=0
 
-# ---- 1-GPU models: batch 4 per node ----
-SMALL_BATCH=()
+# ---- 1-GPU models: batch up to 4 per node, grouped by activate_script ----
+# Collect all unique activate_script values among 1-GPU models.
+declare -a UNIQUE_ENVS=()
 for entry in "${MODELS[@]}"; do
-    IFS='|' read -r family _ _ model_name num_gpus _ <<< "$entry"
+    IFS='|' read -r family _ _ _ num_gpus _ activate_script <<< "$entry"
     [ -n "$FAMILY_FILTER" ] && [ "$family" != "$FAMILY_FILTER" ] && continue
     [ "$num_gpus" -ne 1 ] && continue
+    found=false
+    for s in "${UNIQUE_ENVS[@]+"${UNIQUE_ENVS[@]}"}"; do
+        [ "$s" = "$activate_script" ] && found=true && break
+    done
+    $found || UNIQUE_ENVS+=("$activate_script")
+done
 
-    if all_tasks_complete "$RESULTS_DIR/$model_name" "$TASKS"; then
-        echo "Skipping: $model_name (all tasks complete)"
-        SKIPPED=$((SKIPPED+1))
-        continue
-    fi
+for current_env in "${UNIQUE_ENVS[@]+"${UNIQUE_ENVS[@]}"}"; do
+    SMALL_BATCH=()
+    for entry in "${MODELS[@]}"; do
+        IFS='|' read -r family _ _ model_name num_gpus _ activate_script <<< "$entry"
+        [ -n "$FAMILY_FILTER" ] && [ "$family" != "$FAMILY_FILTER" ] && continue
+        [ "$num_gpus" -ne 1 ] && continue
+        [ "$activate_script" != "$current_env" ] && continue
 
-    SMALL_BATCH+=("$entry")
-    if [ ${#SMALL_BATCH[@]} -eq 4 ]; then
-        submit_batch SMALL_BATCH "$TIME_SMALL" 1
+        if all_tasks_complete "$RESULTS_DIR/$model_name" "$TASKS"; then
+            echo "Skipping: $model_name (all tasks complete)"
+            SKIPPED=$((SKIPPED+1))
+            continue
+        fi
+
+        SMALL_BATCH+=("$entry")
+        if [ ${#SMALL_BATCH[@]} -eq 4 ]; then
+            submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env"
+            SUBMITTED_NODES=$((SUBMITTED_NODES+1))
+            SMALL_BATCH=()
+        fi
+    done
+    # Flush remainder — still requires a full node even if fewer than 4 models.
+    if [ ${#SMALL_BATCH[@]} -gt 0 ]; then
+        submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env"
         SUBMITTED_NODES=$((SUBMITTED_NODES+1))
-        SMALL_BATCH=()
     fi
 done
-# Flush remainder — still requires a full node even if fewer than 4 models.
-if [ ${#SMALL_BATCH[@]} -gt 0 ]; then
-    submit_batch SMALL_BATCH "$TIME_SMALL" 1
-    SUBMITTED_NODES=$((SUBMITTED_NODES+1))
-fi
 
 # ---- 4-GPU models: one per node ----
 for entry in "${MODELS[@]}"; do
-    IFS='|' read -r family _ _ model_name num_gpus _ <<< "$entry"
+    IFS='|' read -r family _ _ model_name num_gpus _ activate_script <<< "$entry"
     [ -n "$FAMILY_FILTER" ] && [ "$family" != "$FAMILY_FILTER" ] && continue
     [ "$num_gpus" -ne 4 ] && continue
 
@@ -192,7 +228,7 @@ for entry in "${MODELS[@]}"; do
     fi
 
     LARGE_BATCH=("$entry")
-    submit_batch LARGE_BATCH "$TIME_LARGE" 4
+    submit_batch LARGE_BATCH "$TIME_LARGE" 4 "$activate_script"
     SUBMITTED_NODES=$((SUBMITTED_NODES+1))
 done
 

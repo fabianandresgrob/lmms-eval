@@ -105,7 +105,7 @@ fi
 export LMMS_EVAL_DATASETS_CACHE="$SCRATCH/grob1/.cache/huggingface/datasets"
 
 echo "$(date): Activating environment"
-source "$LMMS_EVAL_DIR/sc_venv_template/activate.sh"
+source "${ACTIVATE_SCRIPT:-$LMMS_EVAL_DIR/sc_venv_template/activate.sh}"
 
 NUM_GPUS="${NUM_GPUS:-1}"
 if [ "$NUM_GPUS" -gt 1 ]; then
