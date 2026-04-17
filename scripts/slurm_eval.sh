@@ -1,183 +1,126 @@
 #!/bin/bash
+#SBATCH --account=taco-vlm
+#SBATCH --nodes=1
+#SBATCH --partition=gpus
+#SBATCH --gres=gpu:4
+#SBATCH --time=6:00:00
 #SBATCH --job-name=lmms-eval
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
-# partition, qos, GPU, CPU, mem, and time are all set dynamically by submit_all.sh.
-# Defaults below are only used when running slurm_eval.sh directly without submit_all.sh.
-#SBATCH --partition=mcml-hgx-a100-80x4,mcml-hgx-h100-94x4
-#SBATCH --qos=mcml
 
 set -e
 
-# ---- Validate required env vars ----
-for var in MODEL_TYPE PRETRAINED MODEL_NAME; do
-    if [ -z "${!var}" ]; then
-        echo "ERROR: \$$var is not set."
-        exit 1
-    fi
-done
-
-if [ -z "$SCRATCH" ]; then
-    echo "ERROR: \$SCRATCH is not set."
-    exit 1
-fi
-
-# Honor externally provided TASKS from submission; fall back only if unset.
+# Adjust to where the repo is cloned on JUWELS.
+LMMS_EVAL_DIR="$PROJECT/grob1/lmms-eval"
+RESULTS_DIR="$SCRATCH/grob1/results/lmms-eval"
 # submit_all.sh encodes commas as ';' because sbatch --export is comma-delimited.
 REQUESTED_TASKS_RAW="${TASKS:-vlms_are_biased,vilp,vlind_bench,vlind_bench_oe}"
 REQUESTED_TASKS="${REQUESTED_TASKS_RAW//;/,}"
-BATCH_SIZE="${BATCH_SIZE:-1}"
-LMMS_EVAL_DIR="$HOME/projects/lmms-eval"
-RESULTS_DIR="$SCRATCH/results/lmms-eval"
 
-# Return success if ALL requested tasks already have at least one task-specific
-# samples file for the given model directory.
-#
-# lmms-eval writes outputs as:
-#   $RESULTS_DIR/$MODEL_NAME/<hf_model_slug>/<timestamp>_results.json
-#   $RESULTS_DIR/$MODEL_NAME/<hf_model_slug>/<timestamp>_samples_<task>.jsonl
-# (i.e., no per-task subdirectory under $MODEL_NAME)
-all_tasks_complete() {
-    local model_results_dir="$1"
-    local tasks_csv="$2"
-    local task
-
-    IFS=',' read -r -a task_list <<< "$tasks_csv"
-    for task in "${task_list[@]}"; do
-        # Trim surrounding whitespace
-        task="${task#${task%%[![:space:]]*}}"
-        task="${task%${task##*[![:space:]]}}"
-
-        if ! compgen -G "$model_results_dir"/*/*_samples_"$task".jsonl > /dev/null 2>&1; then
-            return 1
-        fi
-    done
-
-    return 0
-}
+# ---- Helper functions ----
 
 task_has_output() {
-    local model_results_dir="$1"
-    local task="$2"
-
+    local model_results_dir="$1" task="$2"
     compgen -G "$model_results_dir"/*/*_samples_"$task".jsonl > /dev/null 2>&1
 }
 
 pending_tasks_csv() {
-    local model_results_dir="$1"
-    local tasks_csv="$2"
-    local task
+    local model_results_dir="$1" tasks_csv="$2"
     local pending=""
-
     IFS=',' read -r -a task_list <<< "$tasks_csv"
     for task in "${task_list[@]}"; do
-        # Trim surrounding whitespace
-        task="${task#${task%%[![:space:]]*}}"
-        task="${task%${task##*[![:space:]]}}"
-
-        if [ -z "$task" ]; then
-            continue
-        fi
-
+        task="${task#"${task%%[![:space:]]*}"}"
+        task="${task%"${task##*[![:space:]]}"}"
+        [ -z "$task" ] && continue
         if ! task_has_output "$model_results_dir" "$task"; then
-            if [ -z "$pending" ]; then
-                pending="$task"
-            else
-                pending="$pending,$task"
-            fi
+            pending="${pending:+$pending,}$task"
         fi
     done
-
     echo "$pending"
 }
 
-# Override lmms-eval's remote-fs detection — keep datasets cache on $SCRATCH,
-# not redirected to /tmp (which is small on compute nodes).
-export LMMS_EVAL_DATASETS_CACHE="$SCRATCH/.cache/huggingface/datasets"
+run_model() {
+    local model_type="$1" pretrained="$2" model_name="$3" batch_size="${4:-1}" num_gpus="${5:-1}"
+    local model_results_dir="$RESULTS_DIR/$model_name"
 
-# ---- Activate environment ----
-UV_VENV_DIR="$LMMS_EVAL_DIR/.venv"
-if [ -f "$UV_VENV_DIR/bin/activate" ]; then
-    echo "$(date): Activating uv/venv environment at $UV_VENV_DIR"
-    # shellcheck disable=SC1090
-    source "$UV_VENV_DIR/bin/activate"
-elif [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ] || command -v conda > /dev/null 2>&1; then
-    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
-        source "$HOME/miniconda3/etc/profile.d/conda.sh"
-    else
-        eval "$(conda shell.bash hook)"
+    mkdir -p "$model_results_dir" logs
+
+    # mkdir is atomic on shared filesystems — prevents two concurrent workers
+    # from running the same model.
+    local lock_dir="$model_results_dir/.lock"
+    if ! mkdir "$lock_dir" 2>/dev/null; then
+        echo "$(date): Lock held for $model_name — skipping."
+        return 0
     fi
-    echo "$(date): Activating conda environment ${CONDA_ENV:-lmms-eval}"
-    conda activate "${CONDA_ENV:-lmms-eval}"
-else
-    echo "ERROR: No uv/venv found at $UV_VENV_DIR and conda is not available."
+    trap 'rmdir "'"$lock_dir"'" 2>/dev/null || true' RETURN
+
+    local pending
+    pending="$(pending_tasks_csv "$model_results_dir" "$REQUESTED_TASKS")"
+    if [ -z "$pending" ]; then
+        echo "$(date): $model_name — all tasks complete, skipping."
+        return 0
+    fi
+    [ "$pending" != "$REQUESTED_TASKS" ] && \
+        echo "$(date): $model_name — running only missing tasks: $pending"
+
+    local model_args="pretrained=$pretrained"
+    [ "$num_gpus" -gt 1 ] && model_args="${model_args},device_map=auto"
+
+    echo "$(date): Starting $model_name (${num_gpus} GPU(s)), tasks: $pending"
+    cd "$LMMS_EVAL_DIR"
+    python -m lmms_eval \
+        --model "$model_type" \
+        --model_args "$model_args" \
+        --tasks "$pending" \
+        --batch_size "$batch_size" \
+        --output_path "$model_results_dir" \
+        --log_samples \
+        --force_simple \
+        --verbosity INFO
+    echo "$(date): $model_name complete."
+}
+
+# ---- Worker mode ----
+# Called via: srun bash slurm_eval.sh --worker N
+# Reads MODEL_TYPE_N, PRETRAINED_N, MODEL_NAME_N, BATCH_SIZE_N from the
+# inherited SLURM environment. CUDA_VISIBLE_DEVICES is set by srun per GPU slot.
+if [ "$1" = "--worker" ]; then
+    N="$2"
+    model_type_var="MODEL_TYPE_$N"
+    pretrained_var="PRETRAINED_$N"
+    model_name_var="MODEL_NAME_$N"
+    batch_size_var="BATCH_SIZE_$N"
+    run_model "${!model_type_var}" "${!pretrained_var}" "${!model_name_var}" "${!batch_size_var:-1}" 1
+    exit 0
+fi
+
+# ---- Main job ----
+
+if [ -z "$MODEL_TYPE_1" ] || [ -z "$PRETRAINED_1" ] || [ -z "$MODEL_NAME_1" ]; then
+    echo "ERROR: MODEL_TYPE_1, PRETRAINED_1, MODEL_NAME_1 must be set."
     exit 1
 fi
 
-# ---- CUDA setup ----
-TORCH_CUDA_VER=$(python -c "import torch; print(torch.version.cuda)")
-if [ -d "/usr/local/cuda-$TORCH_CUDA_VER" ]; then
-    export CUDA_HOME="/usr/local/cuda-$TORCH_CUDA_VER"
-else
-    export CUDA_HOME="/usr/local/cuda"
-fi
-export PATH=$CUDA_HOME/bin:$PATH
-export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+# Keep datasets cache on scratch — lmms-eval may redirect to /tmp otherwise.
+export LMMS_EVAL_DATASETS_CACHE="$SCRATCH/grob1/.cache/huggingface/datasets"
 
-# ---- Determine model_args ----
-# Use torch to count GPUs — nvidia-smi -L ignores CUDA_VISIBLE_DEVICES and
-# would return all GPUs on the node, not just the ones allocated to this job.
-NUM_GPUS=$(python -c "import torch; print(torch.cuda.device_count())")
-MODEL_ARGS="pretrained=$PRETRAINED"
+echo "$(date): Activating environment"
+source "$LMMS_EVAL_DIR/sc_venv_template/activate.sh"
+
+NUM_GPUS="${NUM_GPUS:-1}"
 if [ "$NUM_GPUS" -gt 1 ]; then
-    MODEL_ARGS="${MODEL_ARGS},device_map=auto"
-    echo "$(date): Multi-GPU mode — $NUM_GPUS GPUs, device_map=auto"
+    # Single large model using all 4 GPUs with device_map=auto.
+    run_model "$MODEL_TYPE_1" "$PRETRAINED_1" "$MODEL_NAME_1" "${BATCH_SIZE_1:-1}" "$NUM_GPUS"
+else
+    # Up to 4 small models in parallel, each pinned to one GPU via srun.
+    SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
+    for i in 1 2 3 4; do
+        pretrained_var="PRETRAINED_$i"
+        [ -z "${!pretrained_var}" ] && continue
+        srun --exclusive -n 1 --gres=gpu:1 --cpus-per-task=72 \
+            --output="logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}_gpu${i}.out" \
+            --error="logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}_gpu${i}.err" \
+            bash "$SCRIPT_PATH" --worker "$i" &
+    done
+    wait
 fi
-
-# ---- Run evaluation ----
-echo "$(date): Starting evaluation"
-echo "  Model type:  $MODEL_TYPE"
-echo "  Pretrained:  $PRETRAINED"
-echo "  Model name:  $MODEL_NAME"
-echo "  Tasks:       $REQUESTED_TASKS"
-echo "  Batch size:  $BATCH_SIZE"
-echo "  GPUs:        $NUM_GPUS"
-echo "  Results dir: $RESULTS_DIR/$MODEL_NAME"
-
-mkdir -p "$RESULTS_DIR/$MODEL_NAME" logs
-
-# ---- Acquire per-model lock ----
-# Prevents two jobs (submitted to different partition pools) from running the
-# same model simultaneously. mkdir is atomic on shared filesystems; the second
-# job to arrive will find the directory already exists and exit cleanly.
-LOCK_DIR="$RESULTS_DIR/$MODEL_NAME/.lock"
-if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-    echo "$(date): Lock already held for $MODEL_NAME — another job is running. Exiting."
-    exit 0
-fi
-# Release lock on exit (success, error, or SLURM timeout signal).
-trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT
-
-# Run only tasks that are still missing outputs.
-PENDING_TASKS="$(pending_tasks_csv "$RESULTS_DIR/$MODEL_NAME" "$REQUESTED_TASKS")"
-if [ -z "$PENDING_TASKS" ]; then
-    echo "$(date): Requested task outputs already exist for $MODEL_NAME ($REQUESTED_TASKS), skipping."
-    exit 0
-fi
-
-if [ "$PENDING_TASKS" != "$REQUESTED_TASKS" ]; then
-    echo "$(date): Some task outputs already exist; running only missing tasks: $PENDING_TASKS"
-fi
-
-cd "$LMMS_EVAL_DIR"
-python -m lmms_eval \
-    --model "$MODEL_TYPE" \
-    --model_args "$MODEL_ARGS" \
-    --tasks "$PENDING_TASKS" \
-    --batch_size "$BATCH_SIZE" \
-    --output_path "$RESULTS_DIR/$MODEL_NAME" \
-    --log_samples \
-    --force_simple \
-    --verbosity INFO
-
-echo "$(date): Evaluation complete. Results in $RESULTS_DIR/$MODEL_NAME"
