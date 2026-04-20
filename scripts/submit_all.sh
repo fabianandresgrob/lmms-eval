@@ -67,7 +67,7 @@ MODELS=(
     "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-4B|internvl3_5-4b|1|1|"
     "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-8B|internvl3_5-8b|1|1|"
     "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-14B|internvl3_5-14b|1|1|"
-    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-38B|internvl3_5-38b|4|1|"
+    "internvl3_5|internvl3_5|OpenGVLab/InternVL3_5-38B|internvl3_5-38b|1|1|"
 
     # InternVL3
     "internvl3|internvl3|OpenGVLab/InternVL3-1B|internvl3-1b|1|1|"
@@ -75,7 +75,7 @@ MODELS=(
     "internvl3|internvl3|OpenGVLab/InternVL3-9B|internvl3-9b|1|1|"
     "internvl3|internvl3|OpenGVLab/InternVL3-8B|internvl3-8b|1|1|"
     "internvl3|internvl3|OpenGVLab/InternVL3-14B|internvl3-14b|1|1|"
-    "internvl3|internvl3|OpenGVLab/InternVL3-38B|internvl3-38b|4|1|"
+    "internvl3|internvl3|OpenGVLab/InternVL3-38B|internvl3-38b|1|1|"
     "internvl3|internvl3|OpenGVLab/InternVL3-78B|internvl3-78b|4|1|"
 
     # Qwen2.5-VL
@@ -98,15 +98,23 @@ MODELS=(
     # Gemma-3
     "gemma3|gemma3|google/gemma-3-4b-it|gemma3-4b|1|1|"
     "gemma3|gemma3|google/gemma-3-12b-it|gemma3-12b|1|1|"
-    "gemma3|gemma3|google/gemma-3-27b-it|gemma3-27b|4|1|"
+    "gemma3|gemma3|google/gemma-3-27b-it|gemma3-27b|1|1|"
 
     # LLaVA 1.5 — needs ENV_LLAVA (original llava package + transformers==4.37.2)
     "llava15|llava|liuhaotian/llava-v1.5-7b|llava15-7b|1|1|${ENV_LLAVA}"
     "llava15|llava|liuhaotian/llava-v1.5-13b|llava15-13b|1|1|${ENV_LLAVA}"
 
     # SAE-finetuned LLaVA — needs ENV_SAE_LLAVA (SAE-modified llava package)
-    # Add your checkpoint paths here, e.g.:
-    # "sae_llava|llava|$SCRATCH/grob1/checkpoints/sae-llava-7b|sae-llava-7b|1|1|${ENV_SAE_LLAVA}"
+    # Simple SAE (encode+decode)
+    "sae_llava|llava|fabiangrob/llava-v1.5-7b-finetune-sae|llava-7b-sae-imagenet|1|1|${ENV_SAE_LLAVA}"
+    "sae_llava|llava|fabiangrob/llava-v1.5-7b-finetune-sae-cc3m-laion|llava-7b-sae-cc3m-laion|1|1|${ENV_SAE_LLAVA}"
+    "sae_llava|llava|fabiangrob/llava-v1.5-13b-finetune-sae|llava-13b-sae-imagenet|1|1|${ENV_SAE_LLAVA}"
+    "sae_llava|llava|fabiangrob/llava-v1.5-13b-finetune-sae-cc3m-laion|llava-13b-sae-cc3m-laion|1|1|${ENV_SAE_LLAVA}"
+    # Encode-only SAE
+    "sae_llava|llava|fabiangrob/llava-v1.5-7b-finetune-sae-encode-only|llava-7b-sae-encode-only-imagenet|1|1|${ENV_SAE_LLAVA}"
+    "sae_llava|llava|fabiangrob/llava-v1.5-7b-finetune-sae-encode-only-cc3m-laion|llava-7b-sae-encode-only-cc3m-laion|1|1|${ENV_SAE_LLAVA}"
+    "sae_llava|llava|fabiangrob/llava-v1.5-13b-finetune-sae-encode-only|llava-13b-sae-encode-only-imagenet|1|1|${ENV_SAE_LLAVA}"
+    "sae_llava|llava|fabiangrob/llava-v1.5-13b-finetune-sae-encode-only-cc3m-laion|llava-13b-sae-encode-only-cc3m-laion|1|1|${ENV_SAE_LLAVA}"
 )
 
 task_has_output() {
