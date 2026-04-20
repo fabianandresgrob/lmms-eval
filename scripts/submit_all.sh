@@ -39,8 +39,8 @@ RESULTS_DIR="$SCRATCH/grob1/results/lmms-eval"
 
 # Env activate.sh paths — keep these in one place.
 ENV_MAIN="${REPOS_DIR}/lmms-eval/sc_venv_template/activate.sh"
-ENV_LLAVA="${REPOS_DIR}/lmms-eval/sc_venv_template-llava/activate.sh"
-ENV_SAE_LLAVA="${REPOS_DIR}/LLaVA/sc_venv_template/activate.sh"
+ENV_LLAVA="${REPOS_DIR}/lmms-eval/sc_venv_template-llava/activate.sh"   # LLaVA-NeXT — LLaVA OV only
+ENV_SAE_LLAVA="${REPOS_DIR}/LLaVA/sc_venv_template/activate.sh"           # SAE-modified LLaVA 1.5 — SAE models + LLaVA 1.5 baseline
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -100,9 +100,9 @@ MODELS=(
     "gemma3|gemma3|google/gemma-3-12b-it|gemma3-12b|1|1|"
     "gemma3|gemma3|google/gemma-3-27b-it|gemma3-27b|1|1|"
 
-    # LLaVA 1.5 — needs ENV_LLAVA (original llava package + transformers==4.37.2)
-    "llava15|llava|liuhaotian/llava-v1.5-7b|llava15-7b|1|1|${ENV_LLAVA}"
-    "llava15|llava|liuhaotian/llava-v1.5-13b|llava15-13b|1|1|${ENV_LLAVA}"
+    # LLaVA 1.5 — uses ENV_SAE_LLAVA (SAE-modified LLaVA fork, compatible with standard LLaVA 1.5)
+    "llava15|llava|liuhaotian/llava-v1.5-7b|llava15-7b|1|1|${ENV_SAE_LLAVA}"
+    "llava15|llava|liuhaotian/llava-v1.5-13b|llava15-13b|1|1|${ENV_SAE_LLAVA}"
 
     # SAE-finetuned LLaVA — needs ENV_SAE_LLAVA (SAE-modified llava package)
     # Simple SAE (encode+decode)
