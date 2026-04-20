@@ -34,7 +34,7 @@ TASKS="vilp_without_fact,vilp,vlms_are_biased,vlind_bench,vlind_bench_oe"
 TIME_SMALL="2:00:00"
 TIME_LARGE="6:00:00"
 ACCOUNT="taco-vlm"
-PARTITION="gpus"
+PARTITION="booster"
 RESULTS_DIR="$SCRATCH/grob1/results/lmms-eval"
 
 # Env activate.sh paths — keep these in one place.

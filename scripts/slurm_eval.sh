@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --account=taco-vlm
 #SBATCH --nodes=1
-#SBATCH --partition=gpus
+#SBATCH --partition=booster
 #SBATCH --gres=gpu:4
 #SBATCH --time=6:00:00
 #SBATCH --job-name=lmms-eval
@@ -52,7 +52,7 @@ run_model() {
         echo "$(date): Lock held for $model_name — skipping."
         return 0
     fi
-    trap 'rmdir "'"$lock_dir"'" 2>/dev/null || true' RETURN
+    trap 'rmdir "'"$lock_dir"'" 2>/dev/null || true' RETURN INT TERM EXIT
 
     local pending
     pending="$(pending_tasks_csv "$model_results_dir" "$REQUESTED_TASKS")"
@@ -104,8 +104,15 @@ fi
 # Keep datasets cache on scratch — lmms-eval may redirect to /tmp otherwise.
 export LMMS_EVAL_DATASETS_CACHE="$SCRATCH/grob1/.cache/huggingface/datasets"
 
+# Compute nodes have no internet — force HuggingFace/transformers to use cache only.
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+
 echo "$(date): Activating environment"
 source "${ACTIVATE_SCRIPT:-$LMMS_EVAL_DIR/sc_venv_template/activate.sh}"
+
+nvidia-smi
 
 NUM_GPUS="${NUM_GPUS:-1}"
 if [ "$NUM_GPUS" -gt 1 ]; then
@@ -117,7 +124,7 @@ else
     for i in 1 2 3 4; do
         pretrained_var="PRETRAINED_$i"
         [ -z "${!pretrained_var}" ] && continue
-        srun --exclusive -n 1 --gres=gpu:1 --cpus-per-task=72 \
+        srun --exclusive -n 1 --gres=gpu:1 \
             --output="logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}_gpu${i}.out" \
             --error="logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}_gpu${i}.err" \
             bash "$SCRIPT_PATH" --worker "$i" &
