@@ -254,7 +254,7 @@ for current_env in "${UNIQUE_ENVS[@]+"${UNIQUE_ENVS[@]}"}"; do
 
         SMALL_BATCH+=("$entry")
         if [ ${#SMALL_BATCH[@]} -eq 4 ]; then
-            local pythonpath_extra=""
+            pythonpath_extra=""
             [ "$current_env" = "$ENV_SAE_LLAVA" ] && pythonpath_extra="$REPOS_DIR/LLaVA-MORE"
             submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env" "$pythonpath_extra"
             SUBMITTED_NODES=$((SUBMITTED_NODES+1))
@@ -263,7 +263,7 @@ for current_env in "${UNIQUE_ENVS[@]+"${UNIQUE_ENVS[@]}"}"; do
     done
     # Flush remainder — still requires a full node even if fewer than 4 models.
     if [ ${#SMALL_BATCH[@]} -gt 0 ]; then
-        local pythonpath_extra=""
+        pythonpath_extra=""
         [ "$current_env" = "$ENV_SAE_LLAVA" ] && pythonpath_extra="$REPOS_DIR/LLaVA-MORE"
         submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env" "$pythonpath_extra"
         SUBMITTED_NODES=$((SUBMITTED_NODES+1))
