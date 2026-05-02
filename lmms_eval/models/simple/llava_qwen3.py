@@ -1,4 +1,3 @@
-import copy
 import warnings
 from datetime import timedelta
 from typing import List, Optional, Tuple, Union
@@ -219,15 +218,16 @@ class LlavaQwen3(lmms):
                 image_tokens = [DEFAULT_IMAGE_TOKEN] * len(visuals)
                 prompts_input = " ".join(image_tokens) + "\n" + prompts_input
 
-            conv = copy.deepcopy(conv_templates[self.conv_template])
+            conv = conv_templates[self.conv_template].copy()
             conv.append_message(conv.roles[0], prompts_input)
             conv.append_message(conv.roles[1], None)
-            prompt = conv.get_prompt()
+            # Pre-fill empty think block to disable Qwen3 thinking mode
+            prompt = conv.get_prompt() + "<think>\n\n</think>\n\n"
 
             pad_token_id = self.tokenizer.pad_token_id if self.tokenizer.pad_token_id is not None else self.tokenizer.eos_token_id
             contxt_id = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(self.device)
 
-            conv.messages[-1][1] = continuation
+            conv.messages[-1][1] = "<think>\n\n</think>\n\n" + continuation
             prompt = conv.get_prompt()
             input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(self.device)
             labels = input_ids.clone()
@@ -294,10 +294,11 @@ class LlavaQwen3(lmms):
                     question = " ".join(image_tokens) + "\n" + context
                 else:
                     question = context
-                conv = copy.deepcopy(conv_templates[self.conv_template])
+                conv = conv_templates[self.conv_template].copy()
                 conv.append_message(conv.roles[0], question)
                 conv.append_message(conv.roles[1], None)
-                question_input.append(conv.get_prompt())
+                # Pre-fill empty think block to disable Qwen3 thinking mode
+                question_input.append(conv.get_prompt() + "<think>\n\n</think>\n\n")
 
             if "max_new_tokens" not in gen_kwargs:
                 gen_kwargs["max_new_tokens"] = 1024
@@ -313,10 +314,12 @@ class LlavaQwen3(lmms):
             input_ids = self.pad_sequence(input_ids_list, batch_first=True, padding_value=pad_token_ids).to(self.device)
             attention_masks = input_ids.ne(pad_token_ids).to(self.device)
 
+            stop_token_ids = getattr(conv_templates[self.conv_template], "stop_token_ids", None)
             cont = self.model.generate(
                 input_ids,
                 attention_mask=attention_masks,
                 pad_token_id=pad_token_ids,
+                eos_token_id=stop_token_ids,
                 images=image_tensor,
                 do_sample=True if gen_kwargs["temperature"] > 0 else False,
                 temperature=gen_kwargs["temperature"],
