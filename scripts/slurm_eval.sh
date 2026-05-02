@@ -76,7 +76,8 @@ run_model() {
         --output_path "$model_results_dir" \
         --log_samples \
         --force_simple \
-        --verbosity INFO
+        --verbosity INFO \
+        --use_cache "$model_results_dir/cache"
     echo "$(date): $model_name complete."
 }
 
