@@ -55,6 +55,7 @@ AVAILABLE_SIMPLE_MODELS = {
     "llava_sglang": "LlavaSglang",
     "llava_vid": "LlavaVid",
     "llava": "Llava",
+    "llava_qwen3": "LlavaQwen3",
     "longva": "LongVA",
     "mantis": "Mantis",
     "minicpm_o": "MiniCPM_O",

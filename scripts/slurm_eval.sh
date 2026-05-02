@@ -111,6 +111,7 @@ export HF_DATASETS_OFFLINE=1
 
 echo "$(date): Activating environment"
 source "${ACTIVATE_SCRIPT:-$LMMS_EVAL_DIR/sc_venv_template/activate.sh}"
+[ -n "${PYTHONPATH_EXTRA:-}" ] && export PYTHONPATH="${PYTHONPATH_EXTRA}:${PYTHONPATH:-}"
 
 nvidia-smi
 

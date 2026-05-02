@@ -104,6 +104,48 @@ MODELS=(
     "llava15|llava|liuhaotian/llava-v1.5-7b|llava15-7b|1|1|${ENV_SAE_LLAVA}"
     "llava15|llava|liuhaotian/llava-v1.5-13b|llava15-13b|1|1|${ENV_SAE_LLAVA}"
 
+    # LLaVA-MORE Qwen3 — CLIP + Qwen3 with optional SAE bottleneck
+    # 0.6B
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-0.6B-baseline|qwen3-0.6B-baseline|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-0.6B-sae-imagenet-enconly|qwen3-0.6B-sae-imagenet-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-0.6B-sae-imagenet-encdec|qwen3-0.6B-sae-imagenet-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-0.6B-sae-cc3m_laion-enconly|qwen3-0.6B-sae-cc3m_laion-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-0.6B-sae-cc3m_laion-encdec|qwen3-0.6B-sae-cc3m_laion-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-0.6B-sae-llava_ov-enconly|qwen3-0.6B-sae-llava_ov-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-0.6B-sae-llava_ov-encdec|qwen3-0.6B-sae-llava_ov-encdec|1|1|${ENV_SAE_LLAVA}"
+    # 1.7B
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-1.7B-baseline|qwen3-1.7B-baseline|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-1.7B-sae-imagenet-enconly|qwen3-1.7B-sae-imagenet-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-1.7B-sae-imagenet-encdec|qwen3-1.7B-sae-imagenet-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-1.7B-sae-cc3m_laion-enconly|qwen3-1.7B-sae-cc3m_laion-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-1.7B-sae-cc3m_laion-encdec|qwen3-1.7B-sae-cc3m_laion-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-1.7B-sae-llava_ov-enconly|qwen3-1.7B-sae-llava_ov-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-1.7B-sae-llava_ov-encdec|qwen3-1.7B-sae-llava_ov-encdec|1|1|${ENV_SAE_LLAVA}"
+    # 4B
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-4B-baseline|qwen3-4B-baseline|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-4B-sae-imagenet-enconly|qwen3-4B-sae-imagenet-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-4B-sae-imagenet-encdec|qwen3-4B-sae-imagenet-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-4B-sae-cc3m_laion-enconly|qwen3-4B-sae-cc3m_laion-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-4B-sae-cc3m_laion-encdec|qwen3-4B-sae-cc3m_laion-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-4B-sae-llava_ov-enconly|qwen3-4B-sae-llava_ov-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-4B-sae-llava_ov-encdec|qwen3-4B-sae-llava_ov-encdec|1|1|${ENV_SAE_LLAVA}"
+    # 8B
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-8B-baseline|qwen3-8B-baseline|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-8B-sae-imagenet-enconly|qwen3-8B-sae-imagenet-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-8B-sae-imagenet-encdec|qwen3-8B-sae-imagenet-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-8B-sae-cc3m_laion-enconly|qwen3-8B-sae-cc3m_laion-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-8B-sae-cc3m_laion-encdec|qwen3-8B-sae-cc3m_laion-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-8B-sae-llava_ov-enconly|qwen3-8B-sae-llava_ov-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-8B-sae-llava_ov-encdec|qwen3-8B-sae-llava_ov-encdec|1|1|${ENV_SAE_LLAVA}"
+    # 14B
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-14B-baseline|qwen3-14B-baseline|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-14B-sae-imagenet-enconly|qwen3-14B-sae-imagenet-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-14B-sae-imagenet-encdec|qwen3-14B-sae-imagenet-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-14B-sae-cc3m_laion-enconly|qwen3-14B-sae-cc3m_laion-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-14B-sae-cc3m_laion-encdec|qwen3-14B-sae-cc3m_laion-encdec|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-14B-sae-llava_ov-enconly|qwen3-14B-sae-llava_ov-enconly|1|1|${ENV_SAE_LLAVA}"
+    "llava_qwen3|llava_qwen3|$SCRATCH/grob1/llava-more/checkpoints/qwen3-14B-sae-llava_ov-encdec|qwen3-14B-sae-llava_ov-encdec|1|1|${ENV_SAE_LLAVA}"
+
     # SAE-finetuned LLaVA — needs ENV_SAE_LLAVA (SAE-modified llava package)
     # Simple SAE (encode+decode)
     "sae_llava|llava|fabiangrob/llava-v1.5-7b-finetune-sae|llava-7b-sae-imagenet|1|1|${ENV_SAE_LLAVA}"
@@ -140,7 +182,7 @@ all_tasks_complete() {
 # $4: activate_script path (empty = default main env)
 submit_batch() {
     local -n _entries="$1"
-    local time="$2" num_gpus="$3" activate_script="$4"
+    local time="$2" num_gpus="$3" activate_script="$4" pythonpath_extra="${5:-}"
 
     [ ${#_entries[@]} -eq 0 ] && return
 
@@ -150,6 +192,7 @@ submit_batch() {
 
     local export_vars="ALL,TASKS=${TASKS_FOR_EXPORT},NUM_GPUS=${num_gpus}"
     [ -n "$activate_script" ] && export_vars="${export_vars},ACTIVATE_SCRIPT=${activate_script}"
+    [ -n "$pythonpath_extra" ] && export_vars="${export_vars},PYTHONPATH_EXTRA=${pythonpath_extra}"
     for i in "${!_entries[@]}"; do
         local n=$((i+1))
         IFS='|' read -r _ model_type pretrained model_name _ batch_size _ <<< "${_entries[$i]}"
@@ -211,14 +254,18 @@ for current_env in "${UNIQUE_ENVS[@]+"${UNIQUE_ENVS[@]}"}"; do
 
         SMALL_BATCH+=("$entry")
         if [ ${#SMALL_BATCH[@]} -eq 4 ]; then
-            submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env"
+            local pythonpath_extra=""
+            [ "$current_env" = "$ENV_SAE_LLAVA" ] && pythonpath_extra="$REPOS_DIR/LLaVA-MORE"
+            submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env" "$pythonpath_extra"
             SUBMITTED_NODES=$((SUBMITTED_NODES+1))
             SMALL_BATCH=()
         fi
     done
     # Flush remainder — still requires a full node even if fewer than 4 models.
     if [ ${#SMALL_BATCH[@]} -gt 0 ]; then
-        submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env"
+        local pythonpath_extra=""
+        [ "$current_env" = "$ENV_SAE_LLAVA" ] && pythonpath_extra="$REPOS_DIR/LLaVA-MORE"
+        submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env" "$pythonpath_extra"
         SUBMITTED_NODES=$((SUBMITTED_NODES+1))
     fi
 done
