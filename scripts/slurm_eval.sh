@@ -109,6 +109,9 @@ export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
 
+export CUDA_HOME=/e/software/default/stages/2026/software/CUDA/13
+export PATH="${CUDA_HOME}/bin:${PATH}"
+
 echo "$(date): Activating environment"
 source "${ACTIVATE_SCRIPT:-$LMMS_EVAL_DIR/sc_venv_template/activate.sh}"
 [ -n "${PYTHONPATH_EXTRA:-}" ] && export PYTHONPATH="${PYTHONPATH_EXTRA}:${PYTHONPATH:-}"
