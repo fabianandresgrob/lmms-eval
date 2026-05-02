@@ -15,7 +15,7 @@
 #   ./scripts/submit_all.sh internvl3                 # filter to InternVL3 family
 #   ./scripts/submit_all.sh --dry-run
 #   ./scripts/submit_all.sh --tasks vlind_bench_oe
-#   ./scripts/submit_all.sh --tasks vlind_bench_oe --time 0:30:00 --time-large 1:30:00
+#   ./scripts/submit_all.sh --tasks vlind_bench_oe --time 1:30:00
 
 set -e
 
@@ -28,11 +28,7 @@ REPOS_DIR="${PROJECT}/grob1"
 FAMILY_FILTER=""
 DRY_RUN=false
 TASKS="vilp_without_fact,vilp,vlms_are_biased,vlind_bench,vlind_bench_oe"
-# Time limits: lower these when running only fast benchmarks to improve backfill scheduling.
-#   Full suite:        TIME_SMALL=2:00:00  TIME_LARGE=6:00:00
-#   vlind_bench_oe:    TIME_SMALL=0:30:00  TIME_LARGE=1:30:00
-TIME_SMALL="2:00:00"
-TIME_LARGE="6:00:00"
+TIME="12:00:00"
 ACCOUNT="taco-vlm"
 PARTITION="booster"
 RESULTS_DIR="$SCRATCH/grob1/results/lmms-eval"
@@ -47,10 +43,8 @@ while [ $# -gt 0 ]; do
         --dry-run) DRY_RUN=true; shift ;;
         --tasks) TASKS="$2"; shift 2 ;;
         --tasks=*) TASKS="${1#--tasks=}"; shift ;;
-        --time) TIME_SMALL="$2"; shift 2 ;;
-        --time=*) TIME_SMALL="${1#--time=}"; shift ;;
-        --time-large) TIME_LARGE="$2"; shift 2 ;;
-        --time-large=*) TIME_LARGE="${1#--time-large=}"; shift ;;
+        --time) TIME="$2"; shift 2 ;;
+        --time=*) TIME="${1#--time=}"; shift ;;
         *) FAMILY_FILTER="$1"; shift ;;
     esac
 done
@@ -256,7 +250,7 @@ for current_env in "${UNIQUE_ENVS[@]+"${UNIQUE_ENVS[@]}"}"; do
         if [ ${#SMALL_BATCH[@]} -eq 4 ]; then
             pythonpath_extra=""
             [ "$current_env" = "$ENV_SAE_LLAVA" ] && pythonpath_extra="$REPOS_DIR/LLaVA-MORE"
-            submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env" "$pythonpath_extra"
+            submit_batch SMALL_BATCH "$TIME" 1 "$current_env" "$pythonpath_extra"
             SUBMITTED_NODES=$((SUBMITTED_NODES+1))
             SMALL_BATCH=()
         fi
@@ -265,7 +259,7 @@ for current_env in "${UNIQUE_ENVS[@]+"${UNIQUE_ENVS[@]}"}"; do
     if [ ${#SMALL_BATCH[@]} -gt 0 ]; then
         pythonpath_extra=""
         [ "$current_env" = "$ENV_SAE_LLAVA" ] && pythonpath_extra="$REPOS_DIR/LLaVA-MORE"
-        submit_batch SMALL_BATCH "$TIME_SMALL" 1 "$current_env" "$pythonpath_extra"
+        submit_batch SMALL_BATCH "$TIME" 1 "$current_env" "$pythonpath_extra"
         SUBMITTED_NODES=$((SUBMITTED_NODES+1))
     fi
 done
@@ -283,7 +277,7 @@ for entry in "${MODELS[@]}"; do
     fi
 
     LARGE_BATCH=("$entry")
-    submit_batch LARGE_BATCH "$TIME_LARGE" 4 "$activate_script"
+    submit_batch LARGE_BATCH "$TIME" 4 "$activate_script"
     SUBMITTED_NODES=$((SUBMITTED_NODES+1))
 done
 
