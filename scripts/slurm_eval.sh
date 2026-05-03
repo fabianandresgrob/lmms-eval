@@ -104,6 +104,7 @@ fi
 
 # Keep datasets cache on scratch — lmms-eval may redirect to /tmp otherwise.
 export LMMS_EVAL_DATASETS_CACHE="$SCRATCH/grob1/.cache/huggingface/datasets"
+export LMMS_DISABLE_SCRATCH=1
 
 # Compute nodes have no internet — force HuggingFace/transformers to use cache only.
 export HF_HUB_OFFLINE=1

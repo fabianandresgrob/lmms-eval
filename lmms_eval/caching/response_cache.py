@@ -445,7 +445,8 @@ class ResponseCache:
         shared_db_path = target_db if os.path.exists(target_db) else None
 
         target_fs = detect_fs_type(cache_root)
-        local_scratch = find_local_scratch() if target_fs == FsType.REMOTE else None
+        _disable_scratch = os.environ.get("LMMS_DISABLE_SCRATCH", "").lower() in ("1", "true", "yes")
+        local_scratch = find_local_scratch() if (target_fs == FsType.REMOTE and not _disable_scratch) else None
 
         rank_db_name = f"rank_{global_rank}.db"
         rank_audit_name = f"rank_{global_rank}.audit.jsonl"
